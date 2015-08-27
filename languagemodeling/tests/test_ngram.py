@@ -1,4 +1,5 @@
 # https://docs.python.org/3/library/unittest.html
+# -*- coding: latin-1 -*-
 from unittest import TestCase
 from math import log
 
@@ -140,3 +141,43 @@ class TestNGram(TestCase):
         }
         for sent, prob in sents.items():
             self.assertAlmostEqual(ngram.sent_log_prob(sent.split()), prob, msg=sent)
+
+    def test_count(self):
+        ngram = NGram(1, self.sents)
+        self.assertEqual(ngram.count(['come']), 2)    
+        self.assertEqual(ngram.count(['gato']), 1)
+        self.assertEqual(ngram.count(['gata']), 1)
+
+        ngram = NGram(2, self.sents)
+        self.assertEqual(ngram.count(['come']), 2)    
+        self.assertEqual(ngram.count(['gato']), 1)
+        self.assertEqual(ngram.count(['gata']), 1)
+
+        self.assertEqual(ngram.count(['come', 'pescado']), 1)    
+        self.assertEqual(ngram.count(['come', 'salmón']), 1)
+        
+        ngram = NGram(3, self.sents)
+        self.assertEqual(ngram.count(['come', 'pescado']), 1)    
+        self.assertEqual(ngram.count(['come', 'salmón']), 1)
+
+        self.assertEqual(ngram.count(['gato', 'come', 'pescado']), 1)    
+        self.assertEqual(ngram.count(['gata', 'come', 'salmón']), 1)
+
+    def test_cond_prob(self):
+        ngram = NGram(1, self.sents)
+        self.assertEqual(ngram.cond_prob('come'), 2.0 / 12)    
+        self.assertEqual(ngram.cond_prob('gato'), 1.0 / 12)
+
+        ngram = NGram(2, self.sents)
+        self.assertEqual(ngram.cond_prob('salmón',  ['come']), 0.5)    
+        self.assertEqual(ngram.cond_prob('pescado', ['come']), 0.5)
+
+        ngram = NGram(3, self.sents)
+        self.assertEqual(ngram.cond_prob('salmón',  ['come']), 0.5)    
+        self.assertEqual(ngram.cond_prob('pescado', ['come']), 0.5)
+        self.assertEqual(ngram.cond_prob('salmón',  ['gata', 'come']), 1.0)    
+        self.assertEqual(ngram.cond_prob('pescado', ['gato', 'come']), 1.0)
+        
+        self.assertEqual(ngram.cond_prob('pescado',  ['gata', 'come']), 0.0)    
+        self.assertEqual(ngram.cond_prob('salmón', ['gato', 'come']), 0.0)
+                
