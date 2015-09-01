@@ -2,6 +2,7 @@
 from collections import defaultdict
 from math import pow, log
 from functools import reduce
+from random import random
 
 class NGram(object):
 
@@ -103,5 +104,85 @@ class NGram(object):
         return reduce(lambda x, y:  x + y, probabilities)
 
 
+class NGramGenerator(object):
+
+    def __init__(self, model):
+        """
+        model -- n-gram model.
+        """
+        
+        self._model = model
+        short_ngrams = filter(lambda x: len(x) == model.n - 1, model.counts)
+
+        self._sampling_model = defaultdict(list)
+        for short_ngram in short_ngrams:
+            long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
+            current_step_beginning = 0.0
+            self._sampling_model[short_ngram]
+            for long_ngram in long_ngrams:
+                current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
+                self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
+                current_step_beginning += current_step
+            #this must be a distribution!
+            assert(abs(current_step_beginning - 1.0) < 0.0001)
+ 
+    def generate_sent(self):
+        """Randomly generate a sentence."""
+
+        #generate random number in [0,1], look for N-gram mapped to interval
+        sample = random()
+        #basic case for unigrams
+        prev_tokens = tuple(['<s>'])
+        result = ['<s>']
+        model = self._model
+
+        #if this is a model other than unigram, let's sample to obtain 'prev_tokens'
+        if model.n > 1:
+            start_ngrams = [(ngram, model.counts[ngram]) for ngram in model.counts if len(ngram) == model.n and ngram[0] == '<s>']
+            total = sum(map(lambda x: x[1], start_ngrams))
+            current_pos = 0.0
+            intervals = []
+            for ngram in start_ngrams:
+                step = float(ngram[1]) / total
+                intervals.append((ngram[0], current_pos, current_pos + step))
+                current_pos += step
+            #TODO: replace this inefficient linear search
+            for ngram in intervals:
+                if ngram[1] < sample < ngram[2]:
+                    prev_tokens = ngram[0]
+                    result = list(prev_tokens)
+
+        sampled = None
+        while sampled != '</s>':
+            sampled = self.generate_token(prev_tokens[1:])
+            prev_tokens = prev_tokens[1:] + (sampled,)
+            result.append(sampled)
+        return result[1:-1]    
+
+
+    def generate_token(self, p_tokens=None):
+        """Randomly generate a token, given prev_tokens.
+ 
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        sample = random()
+        result  = None
+        #for ngram in self._sampling_model[p_tokens]:
+        #    if ngram[0] < sample < ngram[1]:
+        #        result = ngram[2]
+        #return result        
+        def binary_search(chunk):
+            element = chunk[int(len(chunk) / 2)]
+            if element[0] < sample < element[1]:
+                return element
+            elif sample < element[0]:
+                return binary_search(chunk[0 : int(len(chunk) / 2)])    
+            else:     
+                return binary_search(chunk[int(len(chunk) / 2) + 1:])    
+
+        return binary_search(self._sampling_model[p_tokens])[2]
+
+
+        
 
 
