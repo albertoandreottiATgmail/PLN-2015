@@ -166,7 +166,9 @@ class NGramGenerator(object):
 
         sampled = None
         while sampled != '</s>':
+            self.fill_cache(prev_tokens[1:])
             sampled = self.generate_token(prev_tokens[1:])
+            print(sampled)
             prev_tokens = prev_tokens[1:] + (sampled,)
             result.append(sampled)
         return result[1:-1]    
