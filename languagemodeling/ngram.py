@@ -53,10 +53,10 @@ class NGram(object):
         """
         
         #local copy for counts
-        counts = defaultdict(int, self.counts)
+        counts = self.counts
         
-        counts.pop((), None)
-        counts.pop('<s>', None)
+        #counts.pop((), None)
+        #counts.pop('<s>', None)
 
         if prev_tokens == None: 
             total = lambda z: True 
@@ -72,7 +72,9 @@ class NGram(object):
             return num
 
         keys = filter(total, counts)
-        denom = reduce(lambda x, y: x + y, map(lambda key: counts[key], keys))
+        denom = counts[tuple(prev_tokens)]#sum(map(lambda key: counts[key], keys))
+        #counts[()] = b1
+        #counts['<s>'] = b2
         try:
             return float(num) / denom
         except ZeroDivisionError:
@@ -101,7 +103,7 @@ class NGram(object):
 
         log2 = lambda x: float('-inf') if x == 0.0 else log(x, 2)
         probabilities = [log2(prob) for prob in probabilities]
-        return reduce(lambda x, y:  x + y, probabilities)
+        return sum(probabilities)
 
 
 class NGramGenerator(object):
@@ -112,19 +114,37 @@ class NGramGenerator(object):
         """
         
         self._model = model
-        short_ngrams = filter(lambda x: len(x) == model.n - 1, model.counts)
 
+        #short_ngrams = filter(lambda x: len(x) == model.n - 1, model.counts)
         self._sampling_model = defaultdict(list)
-        for short_ngram in short_ngrams:
-            long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
-            current_step_beginning = 0.0
-            self._sampling_model[short_ngram]
-            for long_ngram in long_ngrams:
-                current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
-                self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
-                current_step_beginning += current_step
+        #for short_ngram in short_ngrams:
+        #    long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
+        #    current_step_beginning = 0.0
+        #    self._sampling_model[short_ngram]
+        #    for long_ngram in long_ngrams:
+        #        current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
+        #        self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
+        #        current_step_beginning += current_step
             #this must be a distribution!
-            assert(abs(current_step_beginning - 1.0) < 0.0001)
+        #    assert(abs(current_step_beginning - 1.0) < 0.0001)
+
+    def fill_cache(self, short_ngram):
+        model = self._model
+
+        if short_ngram in self._sampling_model:
+            return
+
+        long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
+        current_step_beginning = 0.0
+        self._sampling_model[short_ngram]
+
+        for long_ngram in long_ngrams:
+            current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
+            self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
+            current_step_beginning += current_step
+            #this must be a distribution!
+        assert(abs(current_step_beginning - 1.0) < 0.0001)
+            
  
     def generate_sent(self):
         """Randomly generate a sentence."""
@@ -154,7 +174,9 @@ class NGramGenerator(object):
 
         sampled = None
         while sampled != '</s>':
+            self.fill_cache(prev_tokens[1:])
             sampled = self.generate_token(prev_tokens[1:])
+            print(sampled)
             prev_tokens = prev_tokens[1:] + (sampled,)
             result.append(sampled)
         return result[1:-1]    
