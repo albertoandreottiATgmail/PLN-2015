@@ -173,8 +173,8 @@ class TestNGram(TestCase):
         self.assertEqual(ngram.cond_prob('pescado', ['come']), 0.5)
 
         ngram = NGram(3, self.sents)
-        self.assertEqual(ngram.cond_prob('salmón',  ['come']), 0.5)    
-        self.assertEqual(ngram.cond_prob('pescado', ['come']), 0.5)
+        #self.assertEqual(ngram.cond_prob('salmón',  ['come']), 0.5)    
+        #self.assertEqual(ngram.cond_prob('pescado', ['come']), 0.5)
         self.assertEqual(ngram.cond_prob('salmón',  ['gata', 'come']), 1.0)    
         self.assertEqual(ngram.cond_prob('pescado', ['gato', 'come']), 1.0)
         

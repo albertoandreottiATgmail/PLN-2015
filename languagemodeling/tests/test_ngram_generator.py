@@ -1,4 +1,5 @@
 # https://docs.python.org/3/library/unittest.html
+# -*- coding: latin-1 -*-
 from unittest import TestCase
 
 from languagemodeling.ngram import NGram, NGramGenerator
@@ -29,8 +30,9 @@ class TestNGramGenerator(TestCase):
                 'salmón': 1 / 12.0,
             }
         }
+        generator.fill_cache(())
         model = { (): {ngram[2]: ngram[1] - ngram[0] for ngram in generator._sampling_model[()]}}
-        self.assertTrue(sorted(probs[()].keys()) == sorted(model[()].keys()))
+        self.assertEqual(sorted(probs[()].keys()), sorted(model[()].keys()))    
         for k in probs[()].keys():
             self.assertTrue(abs(probs[()][k] - model[()][k]) < 0.00001)
 
@@ -61,6 +63,9 @@ class TestNGramGenerator(TestCase):
             ('salmón',): [('.', 1.0)],
         }
         model = {}
+        
+        for key in probs:
+            generator.fill_cache(key)
         for k in generator._sampling_model:
             model[k] = {z[2]: z[1] - z[0]  for z in generator._sampling_model[k]}
         print(model)
@@ -88,6 +93,7 @@ class TestNGramGenerator(TestCase):
 
         for i in range(10):
             sent = generator.generate_sent()
+            print (sent)
             self.assertTrue(set(sent).issubset(voc))
 
     def test_generate_sent_2gram(self):

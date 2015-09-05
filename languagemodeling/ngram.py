@@ -52,29 +52,21 @@ class NGram(object):
         prev_tokens -- the previous n-1 tokens (optional only if n = 1).
         """
         
-        #local copy for counts
+        #local alias for counts
         counts = self.counts
         
-        #counts.pop((), None)
-        #counts.pop('<s>', None)
-
         if prev_tokens == None: 
-            total = lambda z: True 
-            num = counts[tuple([token])]
-        else:
-            total = lambda z: z[:-1] == tuple(prev_tokens)
-            local_prev_tokens = list(prev_tokens)
-            local_prev_tokens.append(token)
-            num = counts[tuple(local_prev_tokens)]
+            return float(counts[tuple([token])]) / counts[()]
+
+        local_prev_tokens = list(prev_tokens)
+        local_prev_tokens.append(token)
+        num = counts[tuple(local_prev_tokens)]
        
         #If we've never seen this ngram, just return 0.0
         if num == 0.0:
             return num
 
-        keys = filter(total, counts)
-        denom = counts[tuple(prev_tokens)]#sum(map(lambda key: counts[key], keys))
-        #counts[()] = b1
-        #counts['<s>'] = b2
+        denom = counts[tuple(prev_tokens)]
         try:
             return float(num) / denom
         except ZeroDivisionError:
@@ -131,18 +123,18 @@ class NGramGenerator(object):
     def fill_cache(self, short_ngram):
         model = self._model
 
-        if short_ngram in self._sampling_model:
+        if tuple(short_ngram) in self._sampling_model:
             return
 
         long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
         current_step_beginning = 0.0
-        self._sampling_model[short_ngram]
+        self._sampling_model[tuple(short_ngram)]
 
         for long_ngram in long_ngrams:
             current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
             self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
             current_step_beginning += current_step
-            #this must be a distribution!
+        #this must be a distribution!
         assert(abs(current_step_beginning - 1.0) < 0.0001)
             
  
@@ -174,9 +166,7 @@ class NGramGenerator(object):
 
         sampled = None
         while sampled != '</s>':
-            self.fill_cache(prev_tokens[1:])
             sampled = self.generate_token(prev_tokens[1:])
-            print(sampled)
             prev_tokens = prev_tokens[1:] + (sampled,)
             result.append(sampled)
         return result[1:-1]    
@@ -192,7 +182,12 @@ class NGramGenerator(object):
         #for ngram in self._sampling_model[p_tokens]:
         #    if ngram[0] < sample < ngram[1]:
         #        result = ngram[2]
-        #return result        
+        #return result
+        if p_tokens == None:
+            self.fill_cache(tuple())
+        else:    
+            self.fill_cache(tuple(p_tokens))        
+
         def binary_search(chunk):
             element = chunk[int(len(chunk) / 2)]
             if element[0] < sample < element[1]:
@@ -204,7 +199,57 @@ class NGramGenerator(object):
 
         return binary_search(self._sampling_model[p_tokens])[2]
 
+class AddOneNGram(NGram):
 
+    def __init__(self, n, sents):
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        """
+        assert n > 0
+        self.n = n
+        self.counts = counts = defaultdict(int)
+
+        lsents = list(sents)
+        for sent in lsents:
+            if n > 1:
+                sent.insert(0, '<s>')
+            sent.append('</s>')
         
+        vocabulary = defaultdict(int)
+        for sent in lsents:
+            for word in sent:
+                vocabulary[word] += 1
+            for i in range(len(sent) - n + 1):
+                ngram = tuple(sent[i: i + n])
+                counts[ngram] += 1
+                counts[ngram[:-1]] += 1
+        self._V = len(vocabulary) + 2 # for <s> and </s>       
+        
+    def cond_prob(self, token, prev_tokens=None):
+        """Conditional probability of a token.
+ 
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        
+        #local alias for counts
+        counts = self.counts
+        
+        if prev_tokens == None: 
+            return float(counts[tuple([token])]) / counts[()]
 
+        local_prev_tokens = list(prev_tokens)
+        local_prev_tokens.append(token)
+        num = counts[tuple(local_prev_tokens)]
+       
+        #If we've never seen this ngram, just return 0.0
+        if num == 0.0:
+            return num
+
+        denom = counts[tuple(prev_tokens)]
+        try:
+            return float(num + 1) / (denom + self._V)
+        except ZeroDivisionError:
+            return float('inf')
 

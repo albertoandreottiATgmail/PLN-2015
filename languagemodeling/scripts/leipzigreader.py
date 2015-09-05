@@ -31,4 +31,4 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
         :return: the given file(s) as a list of sentences or utterances, each encoded as a list of word strings. 
         :rtype: list(list(str)) """ 
     
-        return [sentence.split() for sentence in self._sentences]
+        return [sentence.split() for sentence in self._sentences] 
