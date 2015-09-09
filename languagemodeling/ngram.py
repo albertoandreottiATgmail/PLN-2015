@@ -199,6 +199,7 @@ class NGramGenerator(object):
 
         return binary_search(self._sampling_model[p_tokens])[2]
 
+
 class AddOneNGram(NGram):
 
 class AddOneNGram(NGram):
