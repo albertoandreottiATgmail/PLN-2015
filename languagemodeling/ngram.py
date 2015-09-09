@@ -67,6 +67,7 @@ class NGram(object):
             return num
 
         denom = counts[tuple(prev_tokens)]
+
         try:
             return float(num) / denom
         except ZeroDivisionError:
@@ -95,8 +96,8 @@ class NGram(object):
 
         log2 = lambda x: float('-inf') if x == 0.0 else log(x, 2)
         probabilities = [log2(prob) for prob in probabilities]
-        return sum(probabilities)
 
+        return sum(probabilities)
 
 class NGramGenerator(object):
 
@@ -137,7 +138,6 @@ class NGramGenerator(object):
         #this must be a distribution!
         assert(abs(current_step_beginning - 1.0) < 0.0001)
             
- 
     def generate_sent(self):
         """Randomly generate a sentence."""
 
@@ -199,6 +199,7 @@ class NGramGenerator(object):
 
         return binary_search(self._sampling_model[p_tokens])[2]
 
+
 class AddOneNGram(NGram):
 
     def __init__(self, n, sents):
@@ -252,4 +253,3 @@ class AddOneNGram(NGram):
             return float(num + 1) / (denom + self._V)
         except ZeroDivisionError:
             return float('inf')
-

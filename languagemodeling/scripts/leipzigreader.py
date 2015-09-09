@@ -32,3 +32,4 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
         :rtype: list(list(str)) """ 
     
         return [sentence.split() for sentence in self._sentences] 
+
