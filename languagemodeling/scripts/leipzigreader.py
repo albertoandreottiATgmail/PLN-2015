@@ -8,11 +8,15 @@ import os
 class LeipzigCorpusReader(PlaintextCorpusReader):
     
     def __init__(self, fname):
-        with open(os.path.dirname(os.path.realpath(__file__)) + '/' + fname) as f:
+        #os.path.dirname(os.path.realpath(__file__)) + '/' + fname
+        with open(fname) as f:
             content = f.readlines()
 
         self._sentences = [re.sub(r'^.+\\t', '', sentence) for sentence in content]
-          
+        #remove first token(line number)
+        self._sentences = [sentence.split()[1:] for sentence in self._sentences]
+        #split period in last word
+        self._sentences = [sentence[:-1] + [sentence[-1][:-1], '.'] for sentence in self._sentences]  
 
     def words(self, fileids=None): 
         """ 
@@ -31,5 +35,5 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
         :return: the given file(s) as a list of sentences or utterances, each encoded as a list of word strings. 
         :rtype: list(list(str)) """ 
     
-        return [sentence.split() for sentence in self._sentences] 
+        return self._sentences
 

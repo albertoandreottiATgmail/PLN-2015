@@ -227,7 +227,10 @@ class AddOneNGram(NGram):
                 ngram = tuple(sent[i: i + n])
                 counts[ngram] += 1
                 counts[ngram[:-1]] += 1
-        self._V = len(vocabulary) + 2 # for <s> and </s>       
+        self._V = len(vocabulary) 
+        
+        if n > 1: 
+            self._V -= 1 #remove count for <s>       
         
     def cond_prob(self, token, prev_tokens=None):
         """Conditional probability of a token.
@@ -239,19 +242,19 @@ class AddOneNGram(NGram):
         #local alias for counts
         counts = self.counts
         
-        if prev_tokens == None: 
-            return float(counts[tuple([token])]) / counts[()]
+        if prev_tokens == None:
+            print(counts, self._V, counts[()]) 
+            return float(counts[tuple([token])] + 1) / (counts[()] + self._V)
 
         local_prev_tokens = list(prev_tokens)
         local_prev_tokens.append(token)
         num = counts[tuple(local_prev_tokens)]
-       
-        #If we've never seen this ngram, just return 0.0
-        if num == 0.0:
-            return num
 
         denom = counts[tuple(prev_tokens)]
         try:
+            print(num, denom, self._V)
             return float(num + 1) / (denom + self._V)
         except ZeroDivisionError:
             return float('inf')
+    def V(self):
+        return self._V
