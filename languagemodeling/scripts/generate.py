@@ -13,7 +13,7 @@ Options:
  """ 
 import pickle
 from docopt import docopt
-from ngram import NGramGenerator
+from languagemodeling.ngram import NGramGenerator
 
 if __name__ == '__main__':
     

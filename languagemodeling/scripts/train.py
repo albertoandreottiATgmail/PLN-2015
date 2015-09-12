@@ -1,7 +1,7 @@
 """Train an n-gram model.
 
 Usage:
-  train.py -n <n> -o <file> -a
+  train.py -n <n> -o <file> [-a]
   train.py -h | --help
 
 Options:
@@ -27,7 +27,8 @@ if __name__ == '__main__':
 
     # train the model
     n = int(opts['-n'])
-    model = AddOneNGram(n, sents) if '-a' in opts else NGram(n, sents)
+    model = AddOneNGram(n, sents) if opts['-a'] else NGram(n, sents)
+    print(opts)
 
     # save it
     filename = opts['-o']
