@@ -16,7 +16,41 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
         #remove first token(line number)
         self._sentences = [sentence.split()[1:] for sentence in self._sentences]
         #split period in last word
-        self._sentences = [sentence[:-1] + [sentence[-1][:-1], '.'] for sentence in self._sentences]  
+        self._sentences = [sentence[:-1] + [sentence[-1][:-1], '.'] for sentence in self._sentences]
+                
+        #Handle the comma
+        def split_comma(sent):
+            answer = []
+            for word in sent:
+                if word.endswith(','):
+                    answer.append(word[:-1])
+                    answer.append(',')
+                else:
+                    answer.append(word)
+            return answer
+        self._sentences = [split_comma(sentence) for sentence in self._sentences]
+
+        #Handle the parentheses
+        def split_char(sent, schar, echar):
+            answer = []
+            for word in sent:
+                if word.endswith(echar):
+                    answer.append(word[:-1])
+                    answer.append(word[-1])
+                elif word.startswith(schar):
+                    answer.append(word[0])
+                    answer.append(word)
+                else:
+                    answer.append(word)     
+            return answer
+        self._sentences = [split_char(sentence, '(',')') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, '“','”') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, '"','"') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, '\'','\'') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, ' ', '!') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, ' ', '?') for sentence in self._sentences]
+
+
 
     def words(self, fileids=None): 
         """ 

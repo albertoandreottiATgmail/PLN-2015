@@ -20,7 +20,7 @@ from languagemodeling.ngram import NGram, AddOneNGram
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
-    corpus = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt')
+    corpus = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train')
 
     # load the data
     sents = corpus.sents()
@@ -28,7 +28,6 @@ if __name__ == '__main__':
     # train the model
     n = int(opts['-n'])
     model = AddOneNGram(n, sents) if opts['-a'] else NGram(n, sents)
-    print(opts)
 
     # save it
     filename = opts['-o']

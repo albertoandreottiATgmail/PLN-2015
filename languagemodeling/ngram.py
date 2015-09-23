@@ -3,6 +3,40 @@ from collections import defaultdict
 from math import pow, log
 from functools import reduce
 from random import random
+from languagemodeling.scripts.leipzigreader import LeipzigCorpusReader
+
+
+def compute_ngram(test_set, model):
+    M = 0
+    log_probability = 0.0
+    for sentence in test_set.sents():
+        sentence.append('</s>')
+        sentence.insert(0, '<s>')
+        M += len(sentence)
+        prev_tokens = sentence[ : model.n - 1]
+        sent_prob = model.cond_prob(sentence[model.n - 1], prev_tokens)
+        for word in sentence[model.n - 1 : ]:
+            sent_prob *= model.cond_prob(word, prev_tokens)
+            prev_tokens = prev_tokens[1:] + [word]
+        log_probability += log2(sent_prob)
+
+    return (log_probability, M)
+
+def compute_1gram(test_set, model):
+    M = 0
+    log_probability = 0.0
+    for sentence in test_set.sents():
+        sentence.append('</s>')
+        M += len(sentence)
+        sent_prob = model.cond_prob(sentence[model.n - 1], None)
+        for word in sentence[model.n - 1 : ]:
+            sent_prob *= model.cond_prob(word, None)
+        log_probability += log2(sent_prob)
+
+    return (log_probability, M)
+
+
+
 
 class NGram(object):
 
@@ -179,10 +213,7 @@ class NGramGenerator(object):
         """
         sample = random()
         result  = None
-        #for ngram in self._sampling_model[p_tokens]:
-        #    if ngram[0] < sample < ngram[1]:
-        #        result = ngram[2]
-        #return result
+
         if p_tokens == None:
             self.fill_cache(tuple())
         else:    
@@ -242,7 +273,6 @@ class AddOneNGram(NGram):
         counts = self.counts
         
         if prev_tokens == None:
-            print(counts, self._V, counts[()]) 
             return float(counts[tuple([token])] + 1) / (counts[()] + self._V)
 
         local_prev_tokens = list(prev_tokens)
@@ -251,9 +281,120 @@ class AddOneNGram(NGram):
 
         denom = counts[tuple(prev_tokens)]
         try:
-            print(num, denom, self._V)
             return float(num + 1) / (denom + self._V)
         except ZeroDivisionError:
             return float('inf')
     def V(self):
         return self._V
+
+class InterpolatedNGram(NGram):
+    
+    def __init__(self, n, sents, gamma=None, addone=True):    
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        gamma -- interpolation hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: True).
+        """
+        self.n = n
+        
+        
+        if addone:
+            self.models = [AddOneNGram(i + 1, sents) for i in range(n)]
+        else:
+            self.models = [NGram(i + 1, sents) for i in range(n)]
+
+        #if gamma is given, do not train
+        if gamma or n == 1:
+            self.gamma = gamma
+            return
+        gamma_range = self.drange(0, 20, 0.1)
+        held_out = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_held_out')
+
+        top_gamma = {'gamma' : gamma, 'perplexity' : 0.0}
+        for g in gamma_range:
+            (logp, M) = compute_ngram(InterpolatedNGram(n, sents, g), held_out)
+            cross_entropy = -log_probability / float(M)
+            perplexity = pow2(cross_entropy)
+            if top_gamma['perplexity'] < perplexity:
+                top_gamma['perplexity'] = perplexity
+                top_gamma['gamma'] = g
+            
+        self.gamma = top_gamma['gamma']    
+
+
+    def drange(self, start, stop, step):
+        r = start
+        while r < stop:
+            yield r
+            r += step
+
+            
+    def computeLambdas(self, gamma, counts):
+
+        assert(len(counts) == self.n - 1)
+        #lambdas[1] is lambda1.
+        lambdas = {k + 1: 0 for k in range(len(counts))}
+        print(lambdas)
+        print  (counts)
+        for k in lambdas:
+            lambdas[k] = (1 - sum([lambdas[i + 1] for i in range(k)])) * counts[k - 1] / (counts[k - 1] + gamma)
+        lambdas[self.n] = (1 - sum([lambdas[i + 1] for i in range(self.n - 1)]))
+        return lambdas    
+
+    def count(self, tokens):
+        """Count for a k-gram for k <= n.
+ 
+        tokens -- the k-gram tuple.
+        """
+        if len(tokens) == 0:
+            model = 0
+        else:
+            model = len(tokens) - 1
+
+        return self.models[model].count(tuple(tokens))    
+ 
+    def cond_prob(self, token, prev_tokens=[]):
+        """Conditional probability of a token.
+ 
+        token -- the token.
+        prev_tokens -- the previous n-1 tokens (optional only if n = 1).
+        """
+        n = self.n
+        gamma = self.gamma
+
+        if n == 1:
+            return self.models[0].cond_prob(token)
+
+        ngram = tuple(prev_tokens + [token])
+        ngrams = [tuple(ngram[i:-1]) for i in reversed(range(n - 1))]
+        print('ngram: ', ngram)
+        print('ngrams: ', ngrams)
+        counts = [self.models[i].count(ngrams[i]) for i in range(n - 1)]
+        assert(len(self.models) == n)
+        qmls = [m.cond_prob(ngram[-1], ng) for (m, ng) in zip(self.models, [None] + ngrams)]
+        
+        for x in zip(self.models, [None] + ngrams):
+            print('zip: ', x[0].n, x[1])
+        print('qmls: ', qmls)
+
+        lambdas = self.computeLambdas(gamma, counts)
+        print(lambdas)
+        assert(len(counts) + 1 == len(lambdas))
+        assert(len(lambdas) == n)
+
+        lambda_list = []
+        for k in sorted(lambdas.keys() ):
+            lambda_list.append(lambdas[k])
+
+        return self.dot_product(reversed(lambda_list), qmls) 
+    
+    def dot_product(self, v, w):
+        print('v: ', v, '/n', 'w: ', w)
+        return sum(map(lambda x: x[0] * x[1], zip(v, w)))
+
+
+
+
+

@@ -23,4 +23,22 @@ python languagemodeling/scripts/generate.py -n 2 -i four-gram.model
 nosetests languagemodeling/tests/test_ngram_generator.py
 nosetests languagemodeling/tests/test_addone_ngram.py
 
+python languagemodeling/scripts/eval.py -i uni-gram.model
+python languagemodeling/scripts/eval.py -i bi-gram.model
+python languagemodeling/scripts/eval.py -i tri-gram.model
+python languagemodeling/scripts/eval.py -i four-gram.model
 
+python languagemodeling/scripts/train.py -n 1 -o add_one.model -a
+python languagemodeling/scripts/eval.py -i add_one.model 
+
+python languagemodeling/scripts/train.py -n 2 -o add_one.model -a
+python languagemodeling/scripts/eval.py -i add_one.model 
+
+python languagemodeling/scripts/train.py -n 3 -o add_one.model -a
+python languagemodeling/scripts/eval.py -i add_one.model 
+
+python languagemodeling/scripts/train.py -n 4 -o add_one.model -a
+python languagemodeling/scripts/eval.py -i add_one.model
+
+
+ 
