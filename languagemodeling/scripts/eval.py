@@ -29,7 +29,7 @@ if __name__ == '__main__':
     model = pickle.load(open(model_file, "rb"))
 
     test_set = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_test')
-    log2 = lambda x: log(x, 2)
+    log2 = lambda x: log(x, 2.0)
     pow2 = lambda x: pow(2.0, x)
     
     if model.n > 1:

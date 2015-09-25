@@ -23,22 +23,16 @@ python languagemodeling/scripts/generate.py -n 2 -i four-gram.model
 nosetests languagemodeling/tests/test_ngram_generator.py
 nosetests languagemodeling/tests/test_addone_ngram.py
 
-python languagemodeling/scripts/eval.py -i uni-gram.model
-python languagemodeling/scripts/eval.py -i bi-gram.model
-python languagemodeling/scripts/eval.py -i tri-gram.model
-python languagemodeling/scripts/eval.py -i four-gram.model
+for i in `seq 1 4`;
+    do
+        python languagemodeling/scripts/train.py -n $i -o add_one.model -a
+        python languagemodeling/scripts/eval.py -i add_one.model
+    done    
 
-python languagemodeling/scripts/train.py -n 1 -o add_one.model -a
-python languagemodeling/scripts/eval.py -i add_one.model 
+for i in `seq 1 4`;
+    do
+        python languagemodeling/scripts/train.py -n $i -o interpolated.model -i
+        python languagemodeling/scripts/eval.py -i interpolated.model 
+        rm interpolated.model
+    done    
 
-python languagemodeling/scripts/train.py -n 2 -o add_one.model -a
-python languagemodeling/scripts/eval.py -i add_one.model 
-
-python languagemodeling/scripts/train.py -n 3 -o add_one.model -a
-python languagemodeling/scripts/eval.py -i add_one.model 
-
-python languagemodeling/scripts/train.py -n 4 -o add_one.model -a
-python languagemodeling/scripts/eval.py -i add_one.model
-
-
- 
