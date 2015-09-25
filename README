@@ -1,0 +1,40 @@
+README
+===============
+Ex 1:
+I defined a custom reader in class LeipzigCorpusReader, of module scripts/leipzigreader.
+The exact file I used for the corpus can be downloaded directly from,
+http://corpora2.informatik.uni-leipzig.de/downloads/eng-za_web_2013_100K-text.tar.gz
+
+The size is about 11MB.
+
+Ex 3:
+
+UNIGRAMS
+
+['second', 'for', 'dance', 'If', 'Church', 'strength', 'must', 'be', 'earn', '.', 'mission', 'South', 'than', 'they', 'serve', 'sedimentologie', 'Africa', '.', 'on', 'a', 'and', ',', ',', 'the', 'application', 'on', 'of', 'said', 'to', 'platforms', 'gave', 'penalties', 'appointments', 'give', 'with', 'purchased', 'would', 'complete', 'loss', 'all', 'open', 'boy', 'is', 'Randburg', 'Hugo', 'first', 'rely', 'what', 'enactment', 'trade', '14.']
+
+['that', 'in', 'successfully', 'extra', 'of', 'defined', 'you', 'a', 'the', 'performance', 'of', 'Maybe', 'asset', 'the', 'the', 'a', 'and', 'exercise']
+
+
+2-GRAMS
+
+['This', 'is', 'a', 'hangover', ',', 'dimensionally', 'stable', 'riding', 'rhythm', ',', 'exposure', 'in', 'on', 'the', 'Radar', 'contact', 'Kenny', 'Leluma', ',', 'the', 'selfless', 'patriots', '.']
+
+['He', ',', 'is', 'a', 'wide', 'range', 'of', 'Mesembryanthemum', 'gariusanum', ',', 'informed', 'basis', ',', 'but', 'with', 'running', 'at', 'the', 'funding', 'and', 'creating', 'special', 'duty', 'and', 'offered', 'on', 'petroleum', 'industry', 'is', 'quite', 'a', 'few', 'months', '.']
+
+3-GRAMS
+
+['The', 'result', 'is', 'a', 'versatile', 'Black', 'Marble', 'Grey', 'Gradient', 'which', 'can', 'be', 'short-term', '(', '(3-6', 'months', ')', ',', 'Threw', 'It', 'On', 'The', 'Tech', 'Labs', '.']
+
+['Residential', 'Wonderful', 'rural', 'facebrick', 'home', 'in', 'order', 'to', 'avoid', 'feelings', 'of', 'Tibetans', 'inside', 'Tibet', 'through', 'this', 'film,', '”', 'Wangchen', 'says', 'in', 'a', 'pocket', ',', 'it', 'refers', 'to', 'studying', 'that', 'takes', 'innocent', 'life', 'are', 'in', 'those', 'who', 'have', 'already', 'undertaken', 'an', 'ECG', 'and', 'a', 'safe', 'space', 'for', 'a', 'very', 'comprehensive', 'training', 'facilities', 'approved', 'by', 'VESA', 'in', 'the', 'room', ',', 'vichy', 'shower', ',', 'you', 'made', 'things', 'much', 'worse', '.']
+
+4-GRAMS
+
+['There', 'five', 'decidious', 'species', 'in', 'this', 'genus', ',', 'the', 'plants', 'are', 'give', 'the', 'proper', 'care', 'they', 'will', 'flourish', 'and', 'produce', 'very', 'tasty', 'vegetables', '.']
+
+['Saw', 'Shibby', 'in', 'Plumstead', 'opposite', 'the', 'PnP', '.']
+
+
+Ex 4:
+
+
