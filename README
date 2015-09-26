@@ -22,11 +22,14 @@ UNIGRAMS
 
 ['He', ',', 'is', 'a', 'wide', 'range', 'of', 'Mesembryanthemum', 'gariusanum', ',', 'informed', 'basis', ',', 'but', 'with', 'running', 'at', 'the', 'funding', 'and', 'creating', 'special', 'duty', 'and', 'offered', 'on', 'petroleum', 'industry', 'is', 'quite', 'a', 'few', 'months', '.']
 
+['IRMSA', 'applied', 'to', 'stay', '.']
+
 3-GRAMS
 
 ['The', 'result', 'is', 'a', 'versatile', 'Black', 'Marble', 'Grey', 'Gradient', 'which', 'can', 'be', 'short-term', '(', '(3-6', 'months', ')', ',', 'Threw', 'It', 'On', 'The', 'Tech', 'Labs', '.']
 
-['Residential', 'Wonderful', 'rural', 'facebrick', 'home', 'in', 'order', 'to', 'avoid', 'feelings', 'of', 'Tibetans', 'inside', 'Tibet', 'through', 'this', 'film,', '”', 'Wangchen', 'says', 'in', 'a', 'pocket', ',', 'it', 'refers', 'to', 'studying', 'that', 'takes', 'innocent', 'life', 'are', 'in', 'those', 'who', 'have', 'already', 'undertaken', 'an', 'ECG', 'and', 'a', 'safe', 'space', 'for', 'a', 'very', 'comprehensive', 'training', 'facilities', 'approved', 'by', 'VESA', 'in', 'the', 'room', ',', 'vichy', 'shower', ',', 'you', 'made', 'things', 'much', 'worse', '.']
+['About', 'five', 'years', ',', 'until', 'recently', 'these', 'have', 'generally', 'been', 'between', 'black', 'consciousness', 'and', 'an', 'inventor', 'and', 'co-inventor', 'on', 'numerous', 'occasions', 'in', 'previous', 'seasons', 'and', 'make', 'a', 'better', 'South', 'Africa', 'is', 'being', 'protected', 'from', 'spambots', '.']
+
 
 4-GRAMS
 
@@ -34,7 +37,13 @@ UNIGRAMS
 
 ['Saw', 'Shibby', 'in', 'Plumstead', 'opposite', 'the', 'PnP', '.']
 
+['They', 'said', 'in', 'their', 'submission', 'that', 'the', 'law', 'should', 'be', 'easily', 'accessible', 'to', 'all', 'people', '.']
 
-Ex 4:
+Ex 5,6,7: perplexities at different N.
+
+Model          N=1    N=2     N=3    N=4
+AddOne        2489   7096   33665  33739
+Interpolated  2481   2081    4264   3630
+
 
 

@@ -6,6 +6,9 @@ from random import random
 from languagemodeling.scripts.leipzigreader import LeipzigCorpusReader
 import pyprind
 
+
+#some helper functions
+
 log2 = lambda x: log(x, 2.0)
 pow2 = lambda x: pow(2.0, x)
 
@@ -40,6 +43,12 @@ def compute_1gram(test_set, model):
     return (log_probability, M)
 
 
+
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step
 
 
 class NGram(object):
@@ -147,19 +156,7 @@ class NGramGenerator(object):
         """
         
         self._model = model
-
-        #short_ngrams = filter(lambda x: len(x) == model.n - 1, model.counts)
         self._sampling_model = defaultdict(list)
-        #for short_ngram in short_ngrams:
-        #    long_ngrams = filter(lambda x: len(x) == model.n and short_ngram == x[0 : -1], model.counts)
-        #    current_step_beginning = 0.0
-        #    self._sampling_model[short_ngram]
-        #    for long_ngram in long_ngrams:
-        #        current_step = model.cond_prob(long_ngram[-1], long_ngram[:-1])
-        #        self._sampling_model[short_ngram].append((current_step_beginning, current_step_beginning + current_step, long_ngram[-1]))
-        #        current_step_beginning += current_step
-            #this must be a distribution!
-        #    assert(abs(current_step_beginning - 1.0) < 0.0001)
 
     def fill_cache(self, short_ngram):
         model = self._model
@@ -235,8 +232,6 @@ class NGramGenerator(object):
                 return binary_search(chunk[int(len(chunk) / 2) + 1:])    
 
         return binary_search(self._sampling_model[p_tokens])[2]
-
-
 
 class AddOneNGram(NGram):
 
@@ -315,13 +310,13 @@ class InterpolatedNGram(NGram):
         if gamma or n == 1:
             self.gamma = gamma
             return
-        gamma_range = self.drange(85, 125, 0.5)
+
         held_out = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_held_out')
 
         top_gamma = {'gamma' : gamma, 'perplexity' : 10000000.0}
         model = InterpolatedNGram(n, sents, 0.01)
-        for g in gamma_range:
-            
+        print('Training...')
+        for g in pyprind.prog_bar(list(drange(100, 125, 1))):
             model.gamma = g
             (logp, M) = compute_ngram(held_out, model)
             cross_entropy = -logp / float(M)
@@ -329,16 +324,8 @@ class InterpolatedNGram(NGram):
             if top_gamma['perplexity'] > perplexity:
                 top_gamma['perplexity'] = perplexity
                 top_gamma['gamma'] = g
-        print(top_gamma)    
         self.gamma = top_gamma['gamma']    
          
-
-    def drange(self, start, stop, step):
-        r = start
-        while r < stop:
-            yield r
-            r += step
-
             
     def computeLambdas(self, gamma, counts):
 
@@ -379,13 +366,8 @@ class InterpolatedNGram(NGram):
         counts = [self.models[i].count(ngrams[i]) for i in range(n - 1)]
         assert(len(self.models) == n)
         qmls = [m.cond_prob(ngram[-1], ng) for (m, ng) in zip(self.models, [None] + ngrams)]
-        
-        #for x in zip(self.models, [None] + ngrams):
-        #    print('zip: ', x[0].n, x[1])
-        #print('qmls: ', qmls)
 
         lambdas = self.computeLambdas(gamma, counts)
-        #print(lambdas)
         assert(len(counts) + 1 == len(lambdas))
         assert(len(lambdas) == n)
 
@@ -396,10 +378,7 @@ class InterpolatedNGram(NGram):
         return self.dot_product(reversed(lambda_list), qmls) 
     
     def dot_product(self, v, w):
-        #print('v: ', v, '/n', 'w: ', w)
         return sum(map(lambda x: x[0] * x[1], zip(v, w)))
-
-
 
 
 class BackOffNGram(NGram):
@@ -417,12 +396,11 @@ class BackOffNGram(NGram):
 
         self.n = n
         self.models = {}
+        self.cache = {}
 
         if n == 1:
             self.models[1] = AddOneNGram(1, sents) if addone else NGram(1, sents)
-            print(self.models[1].counts)
         else:
-
             lsents = []
             for sent in sents:
                 s = list(sent)
@@ -430,7 +408,6 @@ class BackOffNGram(NGram):
                     s.insert(0, '<s>')
                 s.append('</s>')
                 lsents.append(s)
-
 
             self.sents = lsents
             held_out = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_held_out')
@@ -441,7 +418,7 @@ class BackOffNGram(NGram):
                     self.counts[ngram] += 1
                     self.counts[ngram[:-1]] += 1
             self.counts[tuple(['</s>'])] = len(lsents)            
-            print(self.counts)
+
             if n == 2:
                 self.models[n - 1] = AddOneNGram(n - 1, sents) if addone else NGram(n - 1, sents)
             else:
@@ -453,8 +430,8 @@ class BackOffNGram(NGram):
                 self.beta = beta
                 return
 
-            print('training for N: %d' % self.n)
-            for b in pyprind.prog_bar(list(self.drange(0.1, 0.7, 0.5))):
+            print('Training for N: %d' % self.n)
+            for b in pyprind.prog_bar(list(drange(0.1, 1.4, 0.2))):
                 self.beta = b
                 (logp, M) = compute_ngram(held_out, self)
                 cross_entropy = -logp / float(M)
@@ -473,34 +450,35 @@ class BackOffNGram(NGram):
             return self.counts[tuple(ngram)]
  
     def cond_prob(self, token, prev_tokens=None):
-        if self.n == 1 or prev_tokens == None: 
-            return self.models[1].cond_prob(token)
 
-        print ('A():' , self.A(tuple(prev_tokens)), 'token', token, 'prev_tokens', prev_tokens)
-        if token in self.A(tuple(prev_tokens)):
-            print('token:',  token, 'prev_tokens', prev_tokens, 'prob', (self.counts[tuple(prev_tokens + [token])] - self.beta) / self.counts[tuple(prev_tokens)])
-            #print (self.counts)
-            #print ('pt:', prev_tokens)
-            return (self.counts[tuple(prev_tokens + [token])] - self.beta) / self.counts[tuple(prev_tokens)]
-        else:
-            print('alpha', self.alpha(tuple(prev_tokens)), 'n-1: ', self.models[self.n - 1].cond_prob(token, prev_tokens[1:]), 'denom:', self.denom(tuple(prev_tokens)))
-            return self.alpha(tuple(prev_tokens)) * self.models[self.n - 1].cond_prob(token, prev_tokens[1:]) / self.denom(tuple(prev_tokens))
-
-    def drange(self, start, stop, step):
-        r = start
-        while r < stop:
-            yield r
-            r += step
         
+        if tuple(prev_tokens + [token]) in self.cache:
+            return self.cache[tuple(prev_tokens + [token])]
+
+        if self.n == 1 or prev_tokens == None: 
+            value = self.models[1].cond_prob(token)
+            self.cache[tuple(prev_tokens + [token])] = value            
+            return value
+
+        if token in self.A(tuple(prev_tokens)):
+            value = (self.counts[tuple(prev_tokens + [token])] - self.beta) / self.counts[tuple(prev_tokens)]
+            self.cache[tuple(prev_tokens + [token])] = value            
+            return value
+
+        else:
+            value = self.alpha(tuple(prev_tokens)) * self.models[self.n - 1].cond_prob(token, prev_tokens[1:]) / self.denom(tuple(prev_tokens))
+            self.cache[tuple(prev_tokens + [token])] = value            
+            return value
+
+       
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
  
         tokens -- the k-gram tuple.
         """
-        #print(self.n, tokens)
         answer = set([])
         assert(len(tokens) < self.n)
-        #print (self.sents)
+
         for sent in self.sents:
             for i in range(len(sent) - self.n + 1):
                 ngram = sent[i: i + self.n]
@@ -528,5 +506,5 @@ class BackOffNGram(NGram):
         acc = 0.0
         for x in self.A(tokens):
             acc += self.models[self.n - 1].cond_prob(x, list(tokens[1:]))
-        print('acc', acc)
+
         return 1 - acc    

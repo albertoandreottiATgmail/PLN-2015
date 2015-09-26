@@ -36,3 +36,9 @@ for i in `seq 1 4`;
         rm interpolated.model
     done    
 
+for i in `seq 1 4`;
+    do
+        python languagemodeling/scripts/train.py -n $i -o backoff.model -b
+        python languagemodeling/scripts/eval.py -i backoff.model 
+        rm backoff.model
+    done 
