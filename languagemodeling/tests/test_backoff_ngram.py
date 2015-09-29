@@ -1,4 +1,5 @@
 # https://docs.python.org/3/library/unittest.html
+# -*- coding: latin-1 -*-
 from unittest import TestCase
 
 from languagemodeling.ngram import BackOffNGram

@@ -44,6 +44,7 @@ Ex 5,6,7: perplexities at different N.
 Model          N=1    N=2     N=3    N=4
 AddOne        2489   7096   33665  33739
 Interpolated  2481   2081    4264   3630
+BackOff       2481   1391     822    716
 
 
 

@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 ## A reader for files in the Leipzig corpus ##
 ## file : http://corpora2.informatik.uni-leipzig.de/downloads/eng-za_web_2013_100K-text.tar.gz ##
 import re
@@ -30,6 +31,14 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
             return answer
         self._sentences = [split_comma(sentence) for sentence in self._sentences]
 
+
+        def split_hyphen(sent):
+            answer = []
+            for word in sent:
+                for subw in word.split('-'):
+                    answer.append(subw)
+            return answer
+
         #Handle the parentheses
         def split_char(sent, schar, echar):
             answer = []
@@ -43,12 +52,16 @@ class LeipzigCorpusReader(PlaintextCorpusReader):
                 else:
                     answer.append(word)     
             return answer
+
+
         self._sentences = [split_char(sentence, '(',')') for sentence in self._sentences]
         self._sentences = [split_char(sentence, '“','”') for sentence in self._sentences]
         self._sentences = [split_char(sentence, '"','"') for sentence in self._sentences]
         self._sentences = [split_char(sentence, '\'','\'') for sentence in self._sentences]
         self._sentences = [split_char(sentence, ' ', '!') for sentence in self._sentences]
         self._sentences = [split_char(sentence, ' ', '?') for sentence in self._sentences]
+        self._sentences = [split_char(sentence, ' ', '?') for sentence in self._sentences]
+        self._sentences = [split_hyphen(sentence) for sentence in self._sentences]
 
 
 

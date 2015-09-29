@@ -1,10 +1,12 @@
 # https://docs.python.org/3/library/collections.html
+# -*- coding: latin-1 -*-
 from collections import defaultdict
 from math import pow, log
 from functools import reduce
 from random import random
 from languagemodeling.scripts.leipzigreader import LeipzigCorpusReader
 import pyprind
+import marisa_trie
 
 
 #some helper functions
@@ -15,7 +17,7 @@ pow2 = lambda x: pow(2.0, x)
 def compute_ngram(test_set, model):
     M = 0
     log_probability = 0.0
-    for sentence in test_set.sents():
+    for sentence in pyprind.prog_bar(test_set.sents()):
         sentence.append('</s>')
         sentence.insert(0, '<s>')
         M += len(sentence)
@@ -289,6 +291,13 @@ class AddOneNGram(NGram):
     def V(self):
         return self._V
 
+    def count(self, tokens):
+        """Count for an n-gram or (n-1)-gram.
+ 
+        tokens -- the n-gram or (n-1)-gram tuple.
+        """
+        return self.counts[tuple(tokens)]  
+
 class InterpolatedNGram(NGram):
     
     def __init__(self, n, sents, gamma=None, addone=True):    
@@ -397,6 +406,7 @@ class BackOffNGram(NGram):
         self.n = n
         self.models = {}
         self.cache = {}
+        self.a_cache = {}
 
         if n == 1:
             self.models[1] = AddOneNGram(1, sents) if addone else NGram(1, sents)
@@ -412,36 +422,45 @@ class BackOffNGram(NGram):
             self.sents = lsents
             held_out = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_held_out')
             self.counts = defaultdict(int)
+            self.ngrams = defaultdict(int)
+
             for sent in lsents:
                 for i in range(len(sent) - n + 1):
                     ngram = tuple(sent[i: i + n])
                     self.counts[ngram] += 1
+                    self.ngrams[ngram] += 1
                     self.counts[ngram[:-1]] += 1
             self.counts[tuple(['</s>'])] = len(lsents)            
+
+            self.ngram_trie = marisa_trie.Trie(['-'.join(list(x)) for x in self.ngrams.keys()])
+
+            top_beta = {'beta' : 0, 'perplexity' : 1000000.0}
+
+            #get Beta!
+            if beta != None:
+                self.beta = beta
+            else:
+
+                print('Training for N: %d' % self.n)
+                top_beta = {'beta' : 0, 'perplexity' : 1000000.0}
+                for b in list(drange(0.11, 0.15, 0.02)):
+                    model = BackOffNGram(n, sents, b)
+                    model.beta = b
+                    (logp, M) = compute_ngram(held_out, model)
+                    cross_entropy = -logp / float(M)
+                    perplexity = pow2(cross_entropy)
+                    if top_beta['perplexity'] > perplexity:
+                        top_beta['perplexity'] = perplexity
+                        top_beta['beta'] = b
+        
+                self.beta = float(top_beta['beta'])
 
             if n == 2:
                 self.models[n - 1] = AddOneNGram(n - 1, sents) if addone else NGram(n - 1, sents)
             else:
-                self.models[n - 1] = BackOffNGram(n - 1, sents)
+                self.models[n - 1] = BackOffNGram(n - 1, sents, self.beta)
 
-            top_beta = {'beta' : 0, 'perplexity' : 1000000.0}
-
-            if beta != None:
-                self.beta = beta
-                return
-
-            print('Training for N: %d' % self.n)
-            for b in pyprind.prog_bar(list(drange(0.1, 1.4, 0.2))):
-                self.beta = b
-                (logp, M) = compute_ngram(held_out, self)
-                cross_entropy = -logp / float(M)
-                perplexity = pow2(cross_entropy)
-                if top_beta['perplexity'] > perplexity:
-                    top_beta['perplexity'] = perplexity
-                    top_beta['beta'] = b
-        
-            self.beta = float(top_beta['beta'])
-
+            
 
     def count(self, ngram):
         if self.n == 1:
@@ -451,23 +470,25 @@ class BackOffNGram(NGram):
  
     def cond_prob(self, token, prev_tokens=None):
 
-        
-        if tuple(prev_tokens + [token]) in self.cache:
-            return self.cache[tuple(prev_tokens + [token])]
+        key = tuple(prev_tokens + [token]) if prev_tokens else  tuple([token])
+        value = self.cache.get(key)
+        if value != None:    
+            return value
 
         if self.n == 1 or prev_tokens == None: 
             value = self.models[1].cond_prob(token)
-            self.cache[tuple(prev_tokens + [token])] = value            
+            self.cache[key] = value            
             return value
 
         if token in self.A(tuple(prev_tokens)):
             value = (self.counts[tuple(prev_tokens + [token])] - self.beta) / self.counts[tuple(prev_tokens)]
-            self.cache[tuple(prev_tokens + [token])] = value            
+            assert(value > 0.0)
+            self.cache[key] = value            
             return value
 
         else:
             value = self.alpha(tuple(prev_tokens)) * self.models[self.n - 1].cond_prob(token, prev_tokens[1:]) / self.denom(tuple(prev_tokens))
-            self.cache[tuple(prev_tokens + [token])] = value            
+            self.cache[key] = value            
             return value
 
        
@@ -478,14 +499,15 @@ class BackOffNGram(NGram):
         """
         answer = set([])
         assert(len(tokens) < self.n)
+        value = self.a_cache.get(tokens)
+        if value != None:    
+            return value
+        result = self.ngram_trie.keys('-'.join(list(tokens)) + '-') 
+        answer = [x.split('-')[-1] for x in result]
 
-        for sent in self.sents:
-            for i in range(len(sent) - self.n + 1):
-                ngram = sent[i: i + self.n]
-                if tuple(ngram[:-1]) == tokens:
-                    answer.add(ngram[-1])
-
-        return answer
+        value = frozenset(answer)
+        self.a_cache[tokens] = value
+        return value
  
     def alpha(self, tokens):
         """Missing probability mass for a k-gram with 0 < k < n.
@@ -493,8 +515,10 @@ class BackOffNGram(NGram):
         tokens -- the k-gram tuple.
         """
         acc = 0.0
+
         for w in self.A(tokens):
-            acc += (self.counts[tuple(tokens) + tuple([w])] - self.beta) / self.counts[tuple(tokens)]
+            assert(self.counts[tokens + tuple([w])] > 0)
+            acc += (float(self.counts[tokens + tuple([w])]) - self.beta) / self.counts[tokens]
         return 1 - acc
 
  
