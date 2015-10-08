@@ -38,7 +38,8 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # tag
-    hits, total = 0, 0
+    hits, total, hits_known, total_known = 0, 0, 0, 0
+
     n = len(sents)
     for i, sent in enumerate(sents):
         word_sent, gold_tag_sent = zip(*sent)
@@ -49,12 +50,21 @@ if __name__ == '__main__':
         # global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
         hits += sum(hits_sent)
+        hits_known += sum([hits_sent[i] for i in range(len(hits_sent)) if not model.unknown(word_sent[i])]) 
         total += len(sent)
+        total_known += len([w for w in word_sent if not model.unknown(w)])
+
+        assert(total_known > 0)
         acc = float(hits) / total
 
         progress('{:3.1f}% ({:2.2f}%)'.format(float(i) * 100 / n, acc * 100))
 
     acc = float(hits) / total
+    acc_known = float(hits_known) / total_known
+    acc_unknown = float(hits - hits_known) / (total - total_known)
+
 
     print('')
     print('Accuracy: {:2.2f}%'.format(acc * 100))
+    print('Accuracy known: {:2.2f}%'.format(acc_known * 100))
+    print('Accuracy unknown: {:2.2f}%'.format(acc_unknown * 100))
