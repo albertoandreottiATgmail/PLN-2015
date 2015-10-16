@@ -13,7 +13,7 @@ import pickle
 import sys
 
 from corpus.ancora import SimpleAncoraCorpusReader
-
+from collections import defaultdict
 
 def progress(msg, width=None):
     """Ouput the progress of something on the same line."""
@@ -22,6 +22,8 @@ def progress(msg, width=None):
     print('\b' * width + msg, end='')
     sys.stdout.flush()
 
+def default_dict():
+    return defaultdict(int)
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
@@ -35,7 +37,9 @@ if __name__ == '__main__':
     # load the data
     files = '3LB-CAST/.*\.tbf\.xml'
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
-    sents = list(corpus.tagged_sents())
+    sents = corpus.tagged_sents()
+    conf_mat = defaultdict(default_dict)
+
 
     # tag
     hits, total, hits_known, total_known = 0, 0, 0, 0
@@ -54,6 +58,10 @@ if __name__ == '__main__':
         total += len(sent)
         total_known += len([w for w in word_sent if not model.unknown(w)])
 
+        for gold, predicted in zip(gold_tag_sent, model_tag_sent):
+            conf_mat[gold][predicted] += 1
+
+
         assert(total_known > 0)
         acc = float(hits) / total
 
@@ -68,3 +76,13 @@ if __name__ == '__main__':
     print('Accuracy: {:2.2f}%'.format(acc * 100))
     print('Accuracy known: {:2.2f}%'.format(acc_known * 100))
     print('Accuracy unknown: {:2.2f}%'.format(acc_unknown * 100))
+    print('Confusion Matrix:')
+
+    sorted_keys = sorted(conf_mat.keys())
+    for row in sorted_keys:
+        print (row)
+        print([(col, conf_mat[row][col]) for col in sorted_keys])
+        
+
+
+
