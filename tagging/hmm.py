@@ -2,7 +2,12 @@ from math import log
 from itertools import product
 from collections import defaultdict
 
-log2 = lambda x: log(x, 2.0)
+def log2(x):
+    return log(x, 2.0)
+def dict_int():
+    return defaultdict(int)
+def dict_float():
+    return defaultdict(float)
 
 class HMM:
  
@@ -15,10 +20,10 @@ class HMM:
         """
         self.n = n
         self.tag_set = tagset
-        self.trans = defaultdict(lambda: defaultdict(int)) 
+        self.trans = defaultdict(dict_int) 
         self.trans.update(trans)
         
-        self.out = defaultdict(lambda: defaultdict(int)) 
+        self.out = defaultdict(dict_int) 
         self.out.update(out)
  
     def tagset(self):
@@ -109,8 +114,8 @@ class MLHMM(HMM):
         self.n = n
         self.tag_set = tag_set = set()
         self.counts = counts = defaultdict(int)
-        self.out = out = defaultdict(lambda: defaultdict(int)) 
-        self.trans  = trans = defaultdict(lambda: defaultdict(float))
+        self.out = out = defaultdict(dict_int) 
+        self.trans  = trans = defaultdict(dict_float)
         self.vocab = set() 
 
         for sent in tagged_sents:
@@ -125,6 +130,8 @@ class MLHMM(HMM):
                 #TODO: refactor this!
                 counts[tags] += 1
                 counts[tags[:-1]] += 1
+                if n > 2:
+                    counts[(tags[0],)] += 1
 
                 out[tags[0]][words[0]] += 1
                 trans[tags[:-1]][tags[-1]] += 1
@@ -134,10 +141,15 @@ class MLHMM(HMM):
                     counts[tuple(words[1:])] += 1
                     [self.vocab.add(x) for x in words[1:]]
                     [self.tag_set.add(x) for x in tags[1:]]
-
+        #print(counts)
         for tag in out:
             for word in out[tag]:
-                self.out[tag][word] /= counts[(tag, )]
+                try:
+                    self.out[tag][word] /= counts[(tag, )]
+                except ZeroDivisionError:
+                    pass
+                    print(tag, counts[(tag, )])
+
         
         for prev in trans:
             for tag in trans[prev]:

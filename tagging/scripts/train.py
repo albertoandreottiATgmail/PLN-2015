@@ -6,7 +6,9 @@ Usage:
 
 Options:
   -m <model>    Model to use [default: base]:
-                  base: Baseline
+                  base, Baseline
+                  hmm:n, MLHMM with order n
+
   -o <file>     Output model file.
   -h --help     Show this screen.
 """
@@ -15,10 +17,11 @@ import pickle
 
 from corpus.ancora import SimpleAncoraCorpusReader
 from tagging.baseline import BaselineTagger
+from tagging.hmm import MLHMM
 
 
 models = {
-    'base': BaselineTagger,
+    'base': BaselineTagger, 'hmm': MLHMM
 }
 
 
@@ -31,7 +34,8 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # train the model
-    model = models[opts['-m']](sents)
+    model = models[opts['-m'].split(':')[0]](int(opts['-m'].split(':')[1]), sents) \
+    if opts['-m'].startswith('hmm') else models[opts['-m']](sents)
 
     # save it
     filename = opts['-o']
