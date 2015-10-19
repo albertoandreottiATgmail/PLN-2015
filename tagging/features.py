@@ -1,3 +1,4 @@
+from featureforge.feature import Feature
 
 from collections import namedtuple
 
@@ -35,14 +36,12 @@ def word_istitle(h):
     return sent[i][0].isupper()   
 
 def word_isdigit(h):
-    """Feature: current lowercased word.
+    """Feature: current word is a digit.
     
     h -- a history.
     """   
     sent, i = h.sent, h.i
-    return sent[i].l()
-
-
+    return sent[i].isnumeric()
 
 
 class NPrevTags(Feature):
@@ -52,13 +51,14 @@ class NPrevTags(Feature):
  
         n -- number of previous tags to consider.
         """
+        self.n = n
  
     def _evaluate(self, h):
         """n previous tags tuple.
  
         h -- a history.
         """
- 
+        return h.prev_tags[-self.n:]
  
 class PrevWord(Feature):
  
@@ -67,10 +67,12 @@ class PrevWord(Feature):
  
         f -- the feature.
         """
+        self.f = f
  
     def _evaluate(self, h):
         """Apply the feature to the previous word in the history.
  
         h -- the history.
         """
+        return f._evaluate(h.sent[h.i - 1])
 
