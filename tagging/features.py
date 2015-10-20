@@ -11,6 +11,16 @@ from featureforge.feature import Feature
 History = namedtuple('History', 'sent prev_tags i')
 
 
+
+def prev_tags(h):
+    """Feature: current lowercased word.
+    
+    h -- a history.
+    """
+    sent, i = h.sent, h.i
+    return h.prev_tags
+
+
 def word_lower(h):
     """Feature: current lowercased word.
     
@@ -33,7 +43,7 @@ def word_istitle(h):
     h -- a history.
     """   
     sent, i = h.sent, h.i
-    return sent[i][0].isupper()   
+    return sent[i][0].isupper() and sent[i][1:].islower()  
 
 def word_isdigit(h):
     """Feature: current word is a digit.
@@ -74,5 +84,6 @@ class PrevWord(Feature):
  
         h -- the history.
         """
-        return f._evaluate(h.sent[h.i - 1])
+        history = History(h.sent, h.prev_tags, h.i - 1)
+        return self.f(history)
 
