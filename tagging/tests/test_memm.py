@@ -104,10 +104,10 @@ class TestMEMM(TestCase):
                 self.assertEqual(model.tag_history(h), r)
 
     def test_tag(self):
-        models = [MEMM(i, self.tagged_sents) for i in [1, 2, 3]]
+        models = [MEMM(i, self.tagged_sents) for i in [1, 2, 3, 4]]
 
         sent = 'el gato come pescado .'.split()
         result = 'D N V N P'.split()
 
         for model in models:
-            self.assertEqual(model.tag(sent), result)
+            self.assertEqual(model.tag(sent), result, 'order: ' + str(model.n))

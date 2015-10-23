@@ -29,6 +29,17 @@ def word_lower(h):
     sent, i = h.sent, h.i
     return sent[i].lower()
 
+def next_word_lower(h):
+    """Feature: current lowercased word.
+    
+    h -- a history.
+    """
+    sent, i = h.sent, h.i
+    if i < len(sent) - 1:
+        return sent[i + 1].lower()
+    else:
+        return '</s>'    
+
 def word_isupper(h):
     """Feature: is current word uppercase?
     
@@ -43,7 +54,15 @@ def word_istitle(h):
     h -- a history.
     """   
     sent, i = h.sent, h.i
-    return sent[i][0].isupper() and sent[i][1:].islower()  
+    return sent[i][0].isupper() and sent[i][1:].islower() and i != 0 
+
+def word_isfirst(h):
+    """Feature: is current word a title?
+    
+    h -- a history.
+    """   
+    sent, i = h.sent, h.i
+    return i == 0
 
 def word_isdigit(h):
     """Feature: current word is a digit.
@@ -52,6 +71,28 @@ def word_isdigit(h):
     """   
     sent, i = h.sent, h.i
     return sent[i].isnumeric()
+
+def word_comes_after_verb(h):
+    """Feature: current word is a digit.
+    
+    h -- a history.
+    """   
+    return 'V' in h.prev_tags
+
+def word_ends_mente(h):
+    """Feature: current word is a digit.
+    
+    h -- a history.
+    """   
+    return h.sent[h.i].endswith('mente')
+
+def word_looks_like_verb(h):
+    """Feature: current word ends in 'ando', 'ado', 'ar', 'er', 'ir'.
+    
+    h -- a history.
+    """   
+    return sum([h.sent[h.i].endswith(suffix) for suffix in ['ando', 'ado', 'ar', 'er', 'ir']]) == 1
+
 
 
 class NPrevTags(Feature):

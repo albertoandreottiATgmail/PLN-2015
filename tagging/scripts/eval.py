@@ -37,15 +37,19 @@ if __name__ == '__main__':
     # load the data
     files = '3LB-CAST/.*\.tbf\.xml'
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
-    sents = corpus.tagged_sents()
+    sents = list(corpus.tagged_sents())
     conf_mat = defaultdict(default_dict)
 
 
     # tag
     hits, total, hits_known, total_known = 0, 0, 0, 0
-
+    
     n = len(sents)
     for i, sent in enumerate(sents):
+        
+        if len(sent) == 0:
+            continue
+
         word_sent, gold_tag_sent = zip(*sent)
 
         model_tag_sent = model.tag(word_sent)
@@ -60,7 +64,6 @@ if __name__ == '__main__':
 
         for gold, predicted in zip(gold_tag_sent, model_tag_sent):
             conf_mat[gold][predicted] += 1
-
 
         assert(total_known > 0)
         acc = float(hits) / total
@@ -82,6 +85,7 @@ if __name__ == '__main__':
     for row in sorted_keys:
         print (row)
         print([(col, conf_mat[row][col]) for col in sorted_keys])
+        
         
 
 
