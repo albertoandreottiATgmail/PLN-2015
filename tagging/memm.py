@@ -1,6 +1,8 @@
 from features import *
 from featureforge.vectorizer import Vectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB
 import numpy as np
 
 
@@ -17,7 +19,7 @@ class MEMM:
         self.features = features = [next_word_lower, prev_tags, word_lower, word_isupper, word_istitle, word_isdigit, word_isfirst, word_ends_mente, word_looks_like_verb]
         self.vect = vect = Vectorizer(features)
         vect.fit(self.sents_histories(tagged_sents))
-        self.model = LogisticRegression()
+        self.model = MultinomialNB()
         
         self.tagset = set()
 

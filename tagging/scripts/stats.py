@@ -16,8 +16,8 @@ if __name__ == '__main__':
     opts = docopt(__doc__)
 
     # load the data
-    corpus = SimpleAncoraCorpusReader('ancora-2.0/')
-    sents = corpus.tagged_sents()
+    corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/')
+    sents = list(corpus.tagged_sents())
     counts = defaultdict(int)
     tags = defaultdict(int)
     word_num = 0

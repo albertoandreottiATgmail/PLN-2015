@@ -14,6 +14,8 @@ import sys
 
 from corpus.ancora import SimpleAncoraCorpusReader
 from collections import defaultdict
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 
 def progress(msg, width=None):
     """Ouput the progress of something on the same line."""
@@ -45,14 +47,24 @@ if __name__ == '__main__':
     hits, total, hits_known, total_known = 0, 0, 0, 0
     
     n = len(sents)
+    global_gold = []
+    global_model = []
+
     for i, sent in enumerate(sents):
         
         if len(sent) == 0:
             continue
 
         word_sent, gold_tag_sent = zip(*sent)
+        gold_tag_sent = list(gold_tag_sent)
+        #global_gold = global_gold + gold_tag_sent
+
 
         model_tag_sent = model.tag(word_sent)
+        #global_model = global_model + model_tag_sent
+        #print('model: ', model_tag_sent)
+        #print('gold: ', gold_tag_sent)
+
         assert len(model_tag_sent) == len(gold_tag_sent), i
 
         # global score
@@ -88,5 +100,15 @@ if __name__ == '__main__':
         
         
 
+    #cm = confusion_matrix(global_gold, global_model)
 
+    #print(cm)
+
+    # Show confusion matrix in a separate window
+    #plt.matshow(cm)
+    #plt.title('Confusion matrix')
+    #plt.colorbar()
+    #plt.ylabel('True label')
+    #plt.xlabel('Predicted label')
+    #plt.show()
 
