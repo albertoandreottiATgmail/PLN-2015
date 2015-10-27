@@ -120,8 +120,9 @@ class MLHMM(HMM):
 
         for sent in tagged_sents:
             padded_sent = sent + [('</s>', '</s>')]
+
             if n > 1:
-                padded_sent = [('<s>', '<s>')] + padded_sent
+                padded_sent = (n - 1) * [('<s>', '<s>')] + padded_sent
 
             for i in range(len(padded_sent) - n + 1):
                 [words, tags] = zip(*padded_sent[i: i + n])
@@ -186,7 +187,12 @@ class MLHMM(HMM):
         word -- the word.
         tag -- the tag.
         """
-        return self.out[tag][word] if word in self.out[tag] else 1.0 / len(self.vocab) 
+        #return self.out[tag][word] if word in self.out[tag] else 1.0 / len(self.vocab) 
+        #return self.out[tag][word]
+        if word in self.vocab:
+            return self.out[tag][word]
+        else:
+            return 1.0 / len(self.vocab)
     """
        Todos los métodos de HMM.
     """
@@ -206,6 +212,7 @@ class ViterbiTagger:
         sent -- the sentence.
         """
         pi = [defaultdict(float) for i in range(len(sent) + 2)]
+        cand = [defaultdict(list) for i in range(len(sent) + 2)]
         bp = [defaultdict(str) for i in range(len(sent) + 2)]
         hmm = self.hmm
         tagset_ = hmm.tagset().union(set(['<s>']))
@@ -219,11 +226,20 @@ class ViterbiTagger:
         pi[0][tuple((hmm.n - 1) * ['<s>'])] = 1.0
 
         for k in range(1, m + 1):
-            for end_tokens in product(*[S(k) for k in range(k - hmm.n + 2, k + 1)]):
-                candidates = [(w, pi[k - 1][(w, ) + end_tokens[:-1]] * hmm.trans_prob(end_tokens[-1], (w, ) + end_tokens[:-1]) * hmm.out_prob(sent[k - 1], end_tokens[-1])) for w in S(k - hmm.n + 1)]
-                best = max(candidates, key = lambda x: x[1])
-                pi[k][end_tokens] = best[1] 
-                bp[k][end_tokens] = best[0] # [0] is argmax
+            for key in pi[k - 1]:
+
+                for v in S(k):
+                    out_p = hmm.out_prob(sent[k - 1], v)
+                    if out_p > 0.0:
+                        end_tokens = key[1:] + (v, )
+                        w = key[0]
+                        value = pi[k-1][key] * hmm.trans_prob(v, key) * out_p  
+                        cand[k][end_tokens].append((w, value))
+
+            for etokens in cand[k]: 
+                best = max(cand[k][etokens], key = lambda x: x[1])
+                pi[k][etokens] = best[1] 
+                bp[k][etokens] = best[0] # [0] is argmax
 
         #build response, tri-gram case 
         #(y[m - 1], y[m]) = max([(pi[m][(u,v)] * hmm.trans_prob('</s>', (u, v)) , (u, v)) for u in hmm.tagset() for v in hmm.tagset()])[1]

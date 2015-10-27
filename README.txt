@@ -58,8 +58,15 @@ Check the matrix plot in tagging/baseline_confusion.png
 
 Exercise 5:
 N	Accuracy,		known,		unknown
-2 	87.46%			92.21%		44.41%	
-3   86.30% 			90.42% 		48.96%
+2 	90.87%			95.88%		45.47%	
+3  90.96% 			95.30% 		51.61%
+4  81.02%         84.80%      46.78%
+
+
+Accuracy: 90.87%
+Accuracy known: 95.88%
+Accuracy unknown: 45.47%
+
 
 
 Exercise 7:
@@ -129,7 +136,4 @@ N	Accuracy,		known,		unknown
 3	82.96% 			86.55% 		50.50%
 4 	82.01% 			85.69% 		48.62%
 
-Accuracy: 82.01%
-Accuracy known: 85.69%
-Accuracy unknown: 48.62%
 
