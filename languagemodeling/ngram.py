@@ -366,7 +366,8 @@ class InterpolatedNGram(NGram):
         # lambdas[1] is lambda1.
         lambdas = {k + 1: 0 for k in range(len(counts))}
         for k in lambdas:
-            lambdas[k] = (1 - sum([lambdas[i + 1] for i in range(k)])) * counts[k - 1] / (counts[k - 1] + gamma)
+            lambdas[k] = (1 - sum([lambdas[i + 1] for i in range(k)])) * counts[k - 1] \
+                / (counts[k - 1] + gamma)
         lambdas[self.n] = 1 - sum([lambdas[i + 1] for i in range(self.n - 1)])
         return lambdas
 

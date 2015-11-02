@@ -10,22 +10,14 @@ Options:
   -h --help     Show this screen.
 """
 from docopt import docopt
-import pickle
 from random import random
-
-from nltk.corpus import gutenberg
-from leipzigreader import LeipzigCorpusReader
-from languagemodeling.ngram import NGram, AddOneNGram
-
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
-    
-
     # load the data
     train_fraction = float(opts['-t'])
-    file_name = opts['-i'] if opts['-i'] else 'eng-za_web_2013_100K-sentences.txt' 
+    file_name = opts['-i'] if opts['-i'] else 'eng-za_web_2013_100K-sentences.txt'
 
     test = open(file_name + '_test', "w")
     train = open(file_name + '_train', "w")

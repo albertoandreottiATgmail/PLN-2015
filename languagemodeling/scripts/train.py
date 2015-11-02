@@ -14,8 +14,6 @@ Options:
 """
 from docopt import docopt
 import pickle
-
-from nltk.corpus import gutenberg
 from leipzigreader import LeipzigCorpusReader
 from languagemodeling.ngram import NGram, AddOneNGram, InterpolatedNGram, BackOffNGram
 
@@ -29,18 +27,18 @@ if __name__ == '__main__':
 
     # train the model
     n = int(opts['-n'])
+    train_part = 'eng-za_web_2013_100K-sentences.txt_train_train'
 
     if opts['-i']:
-        corpus = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_train')
+        corpus = LeipzigCorpusReader(train_part)
         sents = corpus.sents()
         model = InterpolatedNGram(n, sents)
     elif opts['-b']:
-        corpus = LeipzigCorpusReader('eng-za_web_2013_100K-sentences.txt_train_train')
+        corpus = LeipzigCorpusReader(train_part)
         sents = corpus.sents()
-        model = BackOffNGram(n, sents)    
-    else:    
+        model = BackOffNGram(n, sents)
+    else:
         model = AddOneNGram(n, sents) if opts['-a'] else NGram(n, sents)
-
 
     # save it
     filename = opts['-o']
