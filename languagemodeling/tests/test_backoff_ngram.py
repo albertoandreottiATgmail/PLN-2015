@@ -242,7 +242,7 @@ class TestBackoffNGram(TestCase):
 
         # only first sentence (second sentence is held-out data)
         counts = {
-            (): 6,
+            #(): 6,
             ('el',): 1,
             ('gato',): 1,
             ('come',): 1,
