@@ -1,11 +1,13 @@
 """Evaulate a parser.
 
 Usage:
-  eval.py -i <file>
+  eval.py -i <file> -m <length> -n <limit>
   eval.py -h | --help
 
 Options:
   -i <file>     Parsing model file.
+  -m <m>        Parse only sentences of length <= <m>.
+  -n <n>        Parse only <n> sentences (useful for profiling).
   -h --help     Show this screen.
 """
 from docopt import docopt
@@ -30,6 +32,10 @@ if __name__ == '__main__':
 
     print('Loading model...')
     filename = opts['-i']
+    limit = opts['-n'] if opts['-n'] is not None else sys.maxint 
+    length = opts['-m'] if opts['-m'] is not None else sys.maxint
+
+
     f = open(filename, 'rb')
     model = pickle.load(f)
     f.close()
@@ -40,27 +46,43 @@ if __name__ == '__main__':
     parsed_sents = list(corpus.parsed_sents())
 
     print('Parsing...')
-    hits, total_gold, total_model = 0, 0, 0
+    hits, unlabelled_hits, total_gold, total_model = 0, 0, 0, 0
     n = len(parsed_sents)
     format_str = '{:3.1f}% ({}/{}) (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
     progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
     for i, gold_parsed_sent in enumerate(parsed_sents):
+        
+        if i > limit:
+            break
+
         tagged_sent = gold_parsed_sent.pos()
+
+        if len(tagged_sent) >= length:
+            continue
 
         # parse
         model_parsed_sent = model.parse(tagged_sent)
 
-        # compute labeled scores
+        # compute labelled scores
         gold_spans = spans(gold_parsed_sent, unary=False)
         model_spans = spans(model_parsed_sent, unary=False)
         hits += len(gold_spans & model_spans)
+        
+        # unlabelled hits
+        unlabelled_hits += len({x[1:] for x in gold_spans} & {x[1:] for x in model_spans})
+
         total_gold += len(gold_spans)
         total_model += len(model_spans)
 
-        # compute labeled partial results
+        # compute labelled partial results
         prec = float(hits) / total_model * 100
         rec = float(hits) / total_gold * 100
         f1 = 2 * prec * rec / (prec + rec)
+
+        # compute labelled partial results
+        uprec = float(unlabelled_hits) / total_model * 100
+        urec = float(unlabelled_hits) / total_gold * 100
+        uf1 = 2 * uprec * urec / (uprec + urec)
 
         progress(format_str.format(float(i+1) * 100 / n, i+1, n, prec, rec, f1))
 
@@ -70,3 +92,7 @@ if __name__ == '__main__':
     print('  Precision: {:2.2f}% '.format(prec))
     print('  Recall: {:2.2f}% '.format(rec))
     print('  F1: {:2.2f}% '.format(f1))
+    print('Unlabelled')
+    print('  Precision: {:2.2f}% '.format(uprec))
+    print('  Recall: {:2.2f}% '.format(urec))
+    print('  F1: {:2.2f}% '.format(uf1))
