@@ -1,7 +1,7 @@
 """Evaulate a parser.
 
 Usage:
-  eval.py -i <file> -m <length> -n <limit>
+  eval.py -i <file> [-m <length>] [-n <limit>]
   eval.py -h | --help
 
 Options:
@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     print('Loading model...')
     filename = opts['-i']
-    limit = opts['-n'] if opts['-n'] is not None else sys.maxint 
-    length = opts['-m'] if opts['-m'] is not None else sys.maxint
+    limit = int(opts['-n']) if opts['-n'] is not None else sys.maxsize 
+    length = int(opts['-m']) if opts['-m'] is not None else sys.maxsize
 
 
     f = open(filename, 'rb')
