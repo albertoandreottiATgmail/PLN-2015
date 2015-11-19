@@ -63,6 +63,7 @@ class TestUPCFG(TestCase):
         tags = 'Det Noun Verb Noun Adj'.split()
         tagged_sent = list(zip(sent, tags))
         tree = model.parse(tagged_sent)
+        #t.pretty_print()
 
         self.assertEqual(tree, t)
 
@@ -75,6 +76,7 @@ class TestUPCFG(TestCase):
                 )
             """)
         model = UPCFG([t], start='S')
+
 
         sent = 'gato el come pescado crudo'.split()
         tags = 'Noun Det Verb Noun Adj'.split()
