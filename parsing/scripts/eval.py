@@ -38,6 +38,7 @@ if __name__ == '__main__':
 
     f = open(filename, 'rb')
     model = pickle.load(f)
+    model._start = 'sentence'
     f.close()
 
     print('Loading corpus...')
@@ -62,11 +63,22 @@ if __name__ == '__main__':
 
         # parse
         model_parsed_sent = model.parse(tagged_sent)
+        print('tagged_sent:',tagged_sent)
 
         # compute labelled scores
+        gold_parsed_sent.collapse_unary(collapsePOS = True)
+        gold_parsed_sent.chomsky_normal_form(factor='right', horzMarkov=0)
+
         gold_spans = spans(gold_parsed_sent, unary=False)
         model_spans = spans(model_parsed_sent, unary=False)
+        
+
+        #gold_parsed_sent.pretty_print()
+        #model_parsed_sent.pretty_print()
+       
         hits += len(gold_spans & model_spans)
+
+        print ('model:', model_spans, 'gold', gold_spans)
         
         # unlabelled hits
         unlabelled_hits += len({x[1:] for x in gold_spans} & {x[1:] for x in model_spans})
@@ -77,14 +89,21 @@ if __name__ == '__main__':
         # compute labelled partial results
         prec = float(hits) / total_model * 100
         rec = float(hits) / total_gold * 100
-        f1 = 2 * prec * rec / (prec + rec)
+        if prec + rec > 0.0:
+            f1 = 2 * prec * rec / (prec + rec)
+        else:
+            f1 = 0.0
+
 
         # compute labelled partial results
         uprec = float(unlabelled_hits) / total_model * 100
         urec = float(unlabelled_hits) / total_gold * 100
-        uf1 = 2 * uprec * urec / (uprec + urec)
+        if uprec + urec > 0.0:
+            uf1 = 2 * uprec * urec / (uprec + urec)
+        else:
+            uf1 = 0.0
 
-        progress(format_str.format(float(i+1) * 100 / n, i+1, n, prec, rec, f1))
+        progress(format_str.format(float(i+1) * 100 / n, i + 1, n, prec, rec, f1))
 
     print('')
     print('Parsed {} sentences'.format(n))
