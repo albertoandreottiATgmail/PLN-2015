@@ -12,7 +12,6 @@ class Flat:
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
         t = Tree(self.start, [Tree(tag, [word]) for word, tag in tagged_sent])
-        #t.pretty_print()
         return t
 
 
@@ -28,8 +27,8 @@ class RBranch:
         """
         t = Tree(self.start, [Tree(tag, [word]) for word, tag in tagged_sent])
         t.chomsky_normal_form(factor='right', horzMarkov=0)
-        #t.pretty_print()
         return t
+
 
 class LBranch:
 
@@ -43,5 +42,4 @@ class LBranch:
         """
         t = Tree(self.start, [Tree(tag, [word]) for word, tag in tagged_sent])
         t.chomsky_normal_form(factor='right', horzMarkov=0)
-        #t.pretty_print()
         return t

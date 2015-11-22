@@ -1,9 +1,3 @@
-Ex1,
-
-
-Ex2,
-
-
 Ex 3,
 Parsed 3492 sentences
 Labeled

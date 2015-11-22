@@ -31,9 +31,8 @@ if __name__ == '__main__':
 
     print('Loading model...')
     filename = opts['-i']
-    limit = int(opts['-n']) if opts['-n'] is not None else sys.maxsize 
+    limit = int(opts['-n']) if opts['-n'] is not None else sys.maxsize
     length = int(opts['-m']) if opts['-m'] is not None else sys.maxsize
-
 
     f = open(filename, 'rb')
     model = pickle.load(f)
@@ -52,7 +51,7 @@ if __name__ == '__main__':
     format_str = '{:3.1f}% ({}/{}) (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
     progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
     for i, gold_parsed_sent in enumerate(parsed_sents):
-        
+
         if i > limit:
             break
 
@@ -69,7 +68,7 @@ if __name__ == '__main__':
         model_spans = spans(model_parsed_sent, unary=False)
 
         hits += len(gold_spans & model_spans)
-      
+
         # unlabelled hits
         unlabelled_hits += len({x[1:] for x in gold_spans} & {x[1:] for x in model_spans})
 
@@ -83,7 +82,6 @@ if __name__ == '__main__':
             f1 = 2 * prec * rec / (prec + rec)
         else:
             f1 = 0.0
-
 
         # compute labelled partial results
         uprec = float(unlabelled_hits) / total_model * 100

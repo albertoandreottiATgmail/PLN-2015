@@ -20,7 +20,6 @@ from parsing.baselines import Flat, RBranch, LBranch
 from parsing.upcfg import UPCFG
 
 
-
 models = {
     'flat': Flat,
     'rbranch': RBranch,
@@ -39,8 +38,8 @@ if __name__ == '__main__':
     print('Training model...')
     if opts['-m'].startswith('upcfg:'):
         key, n = opts['-m'].split(':')
-        model = models[key](corpus.parsed_sents(), markov_window = int(n))
-    else:  
+        model = models[key](corpus.parsed_sents(), markov_window=int(n))
+    else:
         model = models[opts['-m']](corpus.parsed_sents())
 
     print('Saving...')
