@@ -86,18 +86,47 @@ class TestCKYParser(TestCase):
         #self.assertEqual(parser._bp, bp)
 
         # check tree
-        t2 = Tree.fromstring(
-            """
-                (S
-                    (NP (Det el) (Noun gato))
-                    (VP (Verb come) (NP (Noun pescado) (Adj crudo)))
-                )
-            """)
+
         self.assertEqual(t, t2)
 
         # check log probability
         lp2 = log2(1.0 * 0.6 * 1.0 * 0.9 * 1.0 * 1.0 * 0.4 * 0.1 * 1.0)
         self.assertAlmostEqual(lp, lp2)
+
+    def test_ambiguous_parse(self):
+        
+        sentence = 'I drove down the road in the car'
+
+        correct_grammar = PCFG.fromstring(
+            """
+                S -> NP VP              [1.0]
+                VP -> Verb PP           [1.0]
+                PP -> IN NP             [1.0]
+                NP -> NP PP             [0.45] 
+                NP -> Det Noun          [0.45]
+                NP -> I                 [0.1]
+                Verb -> drove           [1.0]
+                IN -> down              [0.5]
+                IN -> in                [0.5]
+                Det -> the              [1.0]
+                Noun -> road            [.5]
+                Noun -> car             [.5]
+            """)
+        parser = CKYParser(grammar)
+
+        tree =  Tree.fromstring(
+            """
+                (S
+                    (NP I)
+                    (VP
+                         (VP (Verb drove) (PP (IN down) (NP (Det the) (NN road))))
+                         (PP (IN in) (NP (Det the) (NN car)))
+                    )
+                )
+            """)
+
+        parser.parse(sentence.split()).pretty_print()
+        self.assertEqual(parser.parse(sentence.split()), tree)
 
     def assertEqualPi(self, pi1, pi2):
         self.assertEqual(set(pi1.keys()), set(pi2.keys()))

@@ -37,7 +37,11 @@ if __name__ == '__main__':
     corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
 
     print('Training model...')
-    model = models[opts['-m']](corpus.parsed_sents())
+    if opts['-m'].startswith('upcfg:'):
+        key, n = opts['-m'].split(':')
+        model = models[key](corpus.parsed_sents(), markov_window = int(n))
+    else:  
+        model = models[opts['-m']](corpus.parsed_sents())
 
     print('Saving...')
     filename = opts['-o']
