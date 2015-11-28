@@ -50,7 +50,7 @@ def word_istitle(h):
     h -- a history.
     """
     sent, i = h.sent, h.i
-    return sent[i][0].isupper() and sent[i][1:].islower() and i != 0
+    return sent[i][0].isupper() and sent[i][1:].islower() # and i != 0
 
 
 def word_isfirst(h):
