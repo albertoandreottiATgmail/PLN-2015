@@ -159,8 +159,11 @@ class MLHMM(HMM):
 
         for prev in trans:
             for tag in trans[prev]:
-                self.trans[prev][tag] += 1
-                self.trans[prev][tag] /= counts[prev] + len(self.trans)
+                denom = counts[prev]
+                if addone:
+                    self.trans[prev][tag] += 1
+                    denom += len(self.trans)
+                self.trans[prev][tag] /= denom
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
