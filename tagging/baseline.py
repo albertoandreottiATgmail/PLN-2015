@@ -3,7 +3,6 @@ from collections import defaultdict
 import operator
 
 
-
 class BaselineTagger:
 
     # this should be a lambda, but lambdas cannot be pickled!
@@ -15,7 +14,7 @@ class BaselineTagger:
         tagged_sents -- training sentences, each one being a list of pairs.
         """
         self.ml_tag = defaultdict(self.dd)
-        self.tags = defaultdict(int)
+        self.tags = tags = defaultdict(int)
         self.counts = defaultdict(int)
         for sent in tagged_sents:
             for word_tag in sent:
@@ -24,9 +23,9 @@ class BaselineTagger:
                 self.counts[word_tag[0]] += 1
 
         for key in self.ml_tag:
-            self.ml_tag[key] = max(self.ml_tag[key])         
+            self.ml_tag[key] = max(self.ml_tag[key])
 
-        self.most_likely = max(list(self.tags.items()), key=operator.itemgetter(1))[0]
+        self.most_likely = max(list(tags.items()), key=operator.itemgetter(1))[0]
 
     def tag(self, sent):
         """Tag a sentence.
