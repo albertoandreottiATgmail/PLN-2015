@@ -58,14 +58,9 @@ Check the matrix plot in tagging/baseline_confusion.png
 
 Exercise 5:
 N	Accuracy,		known,		unknown
-2 	90.87%			95.88%		45.47%	
-3  90.96% 			95.30% 		51.61%
-4  81.02%         84.80%      46.78%
-
-
-Accuracy: 90.87%
-Accuracy known: 95.88%
-Accuracy unknown: 45.47%
+2 	92.33%			97.40%		46.36%	
+3  93.05% 			97.47% 		53.06%
+4  92.18%         96.43%      53.66%
 
 
 
@@ -74,8 +69,8 @@ Exercise 7:
 N	Accuracy,		known,		unknown
 1	89.22%			93.43%		51.13%
 2	87.38%			90.78%		56.53%
-3   88.44%          91.99%		56.31%
-4   88.76%		    92.16%		57.94%	
+3  88.44%         91.99%		56.31%
+4  88.76%         92.16%		57.94%	
 
 For N=3, 	aq -> nc ~ 1186 times
          	nc -> aq ~ 902 times
@@ -118,8 +113,8 @@ This is an effort to generalize better over unknown words.
 N	Accuracy,		known,		unknown
 1	90.16%			93.98%		55.53%
 2	88.97%			92.10%		60.59%
-3   89.28%          92.70%		58.26%
-4   89.46%		    92.57%		61.21%	         	
+3  89.28%         92.70%		58.26%
+4  89.46%         92.57%		61.21%	         	
 
 
 With all these features the results for SVM,
@@ -135,5 +130,4 @@ N	Accuracy,		known,		unknown
 2 	81.95%  		85.13%		53.13%	
 3	82.96% 			86.55% 		50.50%
 4 	82.01% 			85.69% 		48.62%
-
 

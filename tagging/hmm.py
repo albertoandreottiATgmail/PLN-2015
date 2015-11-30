@@ -121,7 +121,7 @@ class MLHMM(HMM):
         self.n = n
         self.tag_set = tag_set = set()
         self.counts = counts = defaultdict(int)
-        self.out = out = defaultdict(dict_int)
+        self.out = out = defaultdict(dict_float)
         self.trans = trans = defaultdict(dict_float)
         self.vocab = set()
 
@@ -143,16 +143,18 @@ class MLHMM(HMM):
                 out[tags[0]][words[0]] += 1
                 trans[tags[:-1]][tags[-1]] += 1
                 self.vocab.add(words[0])
-
+               
                 if i == (len(padded_sent) - n) and n > 1:
                     counts[tuple(words[1:])] += 1
                     [self.vocab.add(x) for x in words[1:]]
                     [self.tag_set.add(x) for x in tags[1:]]
+                    for tag, word in zip(tags[1:], words[1:]):
+                        out[tag][word] += 1
 
         for tag in out:
             for word in out[tag]:
                 try:
-                    self.out[tag][word] /= counts[(tag, )]
+                    self.out[tag][word] /= float(counts[(tag, )])
                 except ZeroDivisionError:
                     pass
                     print(tag, counts[(tag, )])
@@ -164,6 +166,8 @@ class MLHMM(HMM):
                     self.trans[prev][tag] += 1
                     denom += len(self.trans)
                 self.trans[prev][tag] /= denom
+
+
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
@@ -196,6 +200,7 @@ class MLHMM(HMM):
         if word in self.vocab:
             return self.out[tag][word]
         else:
+            #print('smoothing')
             return 1.0 / len(self.vocab)
     """
        Todos los métodos de HMM.
@@ -227,27 +232,44 @@ class ViterbiTagger:
         y = (m + 1) * [0.0]
 
         # initialize pi[k=0]
-        pi[0][tuple((hmm.n - 1) * ['<s>'])] = 1.0
+        if hmm.n > 1: 
+            pi[0][tuple((hmm.n - 1) * ['<s>'])] = log2(1.0)
+        else:
+            pi[0][()] = log2(1.0)
 
         for k in range(1, m + 1):
             for key in pi[k - 1]:
-
                 for v in S(k):
                     out_p = hmm.out_prob(sent[k - 1], v)
                     if out_p > 0.0:
                         end_tokens = key[1:] + (v, )
-                        w = key[0]
-                        value = pi[k-1][key] * hmm.trans_prob(v, key) * out_p
+                        if hmm.n > 1:
+                            w = key[0]
+                        else:
+                            w = v
+                        value = pi[k-1][key] + log2(hmm.trans_prob(v, key)) + log2(out_p)
                         cand[k][end_tokens].append((w, value))
+           
             for etokens in cand[k]:
                 best = max(cand[k][etokens], key=lambda x: x[1])
                 pi[k][etokens] = best[1]
                 bp[k][etokens] = best[0]  # [0] is argmax
 
         tuples = product(*[S(k) for k in range(k - hmm.n + 2, k + 1)])
-        y[m - hmm.n + 2: m + 1] = max([(pi[m][prev] * hmm.trans_prob('</s>', prev), prev) for prev in tuples])[1]
+        
+        if hmm.n > 1:
+            y[m - hmm.n + 2: m + 1] = max([(pi[m][prev] + log2(hmm.trans_prob('</s>', prev)), prev) for prev in pi[m]])[1]
+            for k in reversed(list(range(m - hmm.n + 2))):
+                y[k] = bp[k + hmm.n - 1][tuple(y[k + 1: k + hmm.n])]
+            return y[1:]    
+        else:
+            import operator
+            #print(pi)
+            y = list(range(len(pi)))
+            for ix in range(1, len(pi) - 1):
+                y[ix] = max(pi[ix].items(), key=operator.itemgetter(1))[0][0]
+            return y[1:][:-1]
 
-        for k in reversed(list(range(m - hmm.n + 2))):
-            y[k] = bp[k + hmm.n - 1][tuple(y[k + 1: k + hmm.n])]
 
-        return y[1:]
+        #print(y) 
+        

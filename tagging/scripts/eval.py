@@ -94,9 +94,9 @@ if __name__ == '__main__':
     print('Confusion Matrix:')
 
     sorted_keys = sorted(conf_mat.keys())
-    for row in sorted_keys:
-        print (row)
-        print([(col, conf_mat[row][col]) for col in sorted_keys])
+    #for row in sorted_keys:
+    #    print (row)
+    #    print([(col, conf_mat[row][col]) for col in sorted_keys])
         
         
 
