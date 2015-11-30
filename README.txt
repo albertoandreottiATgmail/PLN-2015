@@ -50,8 +50,8 @@ level:  9
 
 Exercise 3:
 
-Accuracy: 59.97%
-Accuracy known: 63.08%
+Accuracy: 89.03%
+Accuracy known: 95.35%
 Accuracy unknown: 31.80%
 
 Check the matrix plot in tagging/baseline_confusion.png

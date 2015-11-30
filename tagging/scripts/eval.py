@@ -61,9 +61,9 @@ if __name__ == '__main__':
 
 
         model_tag_sent = model.tag(word_sent)
-        #global_model = global_model + model_tag_sent
-        #print('model: ', model_tag_sent)
-        #print('gold: ', gold_tag_sent)
+        # global_model = global_model + model_tag_sent
+        # print('model: ', model_tag_sent)
+        # print('gold: ', gold_tag_sent)
 
         assert len(model_tag_sent) == len(gold_tag_sent), i
 
