@@ -24,7 +24,7 @@ def word_lower(h):
 
 
 def next_word_lower(h):
-    """Feature: current lowercased word.
+    """Feature: next lowercased word.
 
     h -- a history.
     """
@@ -50,7 +50,7 @@ def word_istitle(h):
     h -- a history.
     """
     sent, i = h.sent, h.i
-    return sent[i][0].isupper() and sent[i][1:].islower() # and i != 0
+    return sent[i][0].isupper() and sent[i][1:].islower()
 
 
 def word_isfirst(h):
@@ -58,8 +58,17 @@ def word_isfirst(h):
 
     h -- a history.
     """
-    sent, i = h.sent, h.i
+    i = h.i
     return i == 0
+
+
+def word_length(h):
+    """Feature: current word is a digit.
+
+    h -- a history.
+    """
+    sent = h.sent
+    return len(sent)
 
 
 def word_isdigit(h):
@@ -84,7 +93,15 @@ def word_ends_mente(h):
 
     h -- a history.
     """
-    return h.sent[h.i].endswith('mente')
+    return 'mente' in h.sent[h.i]
+
+
+def word_ends_cion(h):
+    """Feature: current word is a digit.
+
+    h -- a history.
+    """
+    return 'ción' in h.sent[h.i]
 
 
 def word_looks_like_verb(h):
@@ -120,11 +137,29 @@ class PrevWord(Feature):
         f -- the feature.
         """
         self.f = f
- 
+
     def _evaluate(self, h):
         """Apply the feature to the previous word in the history.
 
         h -- the history.
         """
-        history = History(h.sent, h.prev_tags, h.i - 1)
+        history = History(h.sent, h.prev_tags[: -1], h.i - 1)
+        if h.i - 1 == -1:
+            return 'BOS'
+
         return self.f(history)
+
+
+class WordLongerThan(Feature):
+
+    def __init__(self, n):
+        self.n = n
+        self._name = 'word_longer_than_{}'.format(n)
+
+    def _evaluate(self, h):
+        """Feature: is the current word longer than n?
+
+        h -- a history.
+        """
+        sent, i = h.sent, h.i
+        return len(sent[i]) > self.n

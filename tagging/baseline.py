@@ -23,7 +23,7 @@ class BaselineTagger:
                 self.counts[word_tag[0]] += 1
 
         for key in self.ml_tag:
-            self.ml_tag[key] = max(self.ml_tag[key].items(), key=operator.itemgetter(1))[0] 
+            self.ml_tag[key] = max(self.ml_tag[key].items(), key=operator.itemgetter(1))[0]
 
         self.most_likely = max(list(tags.items()), key=operator.itemgetter(1))[0]
 

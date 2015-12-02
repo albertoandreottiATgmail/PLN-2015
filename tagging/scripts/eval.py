@@ -14,8 +14,9 @@ import sys
 
 from corpus.ancora import SimpleAncoraCorpusReader
 from collections import defaultdict
-from sklearn.metrics import confusion_matrix
-import matplotlib.pyplot as plt
+# from sklearn.metrics import confusion_matrix
+# import matplotlib.pyplot as plt
+
 
 def progress(msg, width=None):
     """Ouput the progress of something on the same line."""
@@ -23,6 +24,7 @@ def progress(msg, width=None):
         width = len(msg)
     print('\b' * width + msg, end='')
     sys.stdout.flush()
+
 
 def default_dict():
     return defaultdict(int)
@@ -42,24 +44,20 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
     conf_mat = defaultdict(default_dict)
 
-
     # tag
     hits, total, hits_known, total_known = 0, 0, 0, 0
-    
+
     n = len(sents)
     global_gold = []
     global_model = []
 
     for i, sent in enumerate(sents):
-        
         if len(sent) == 0:
             continue
 
         word_sent, gold_tag_sent = zip(*sent)
         gold_tag_sent = list(gold_tag_sent)
-        #global_gold = global_gold + gold_tag_sent
-
-
+        # global_gold = global_gold + gold_tag_sent
         model_tag_sent = model.tag(word_sent)
         # global_model = global_model + model_tag_sent
         # print('model: ', model_tag_sent)
@@ -70,7 +68,7 @@ if __name__ == '__main__':
         # global score
         hits_sent = [m == g for m, g in zip(model_tag_sent, gold_tag_sent)]
         hits += sum(hits_sent)
-        hits_known += sum([hits_sent[i] for i in range(len(hits_sent)) if not model.unknown(word_sent[i])]) 
+        hits_known += sum([hits_sent[i] for i in range(len(hits_sent)) if not model.unknown(word_sent[i])])
         total += len(sent)
         total_known += len([w for w in word_sent if not model.unknown(w)])
 
@@ -86,7 +84,6 @@ if __name__ == '__main__':
     acc_known = float(hits_known) / total_known
     acc_unknown = float(hits - hits_known) / (total - total_known)
 
-
     print('')
     print('Accuracy: {:2.2f}%'.format(acc * 100))
     print('Accuracy known: {:2.2f}%'.format(acc_known * 100))
@@ -94,21 +91,17 @@ if __name__ == '__main__':
     print('Confusion Matrix:')
 
     sorted_keys = sorted(conf_mat.keys())
-    #for row in sorted_keys:
-    #    print (row)
-    #    print([(col, conf_mat[row][col]) for col in sorted_keys])
-        
-        
+    # for row in sorted_keys:
+    #     print (row)
+    #     print([(col, conf_mat[row][col]) for col in sorted_keys])
 
-    #cm = confusion_matrix(global_gold, global_model)
-
-    #print(cm)
+    # cm = confusion_matrix(global_gold, global_model)
+    # print(cm)
 
     # Show confusion matrix in a separate window
-    #plt.matshow(cm)
-    #plt.title('Confusion matrix')
-    #plt.colorbar()
-    #plt.ylabel('True label')
-    #plt.xlabel('Predicted label')
-    #plt.show()
-
+    # plt.matshow(cm)
+    # plt.title('Confusion matrix')
+    # plt.colorbar()
+    # plt.ylabel('True label')
+    # plt.xlabel('Predicted label')
+    # plt.show()

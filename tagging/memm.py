@@ -16,7 +16,16 @@ class MEMM:
         self.vocab = set()
         self.n = n
         self.sents = tagged_sents
-        self.features = features = [next_word_lower, prev_tags, word_lower, word_isupper, word_istitle, word_isdigit, word_isfirst, word_ends_mente, word_looks_like_verb]
+        # self.features = features = [next_word_lower, prev_tags, word_lower, word_isupper, word_istitle, word_isdigit, word_isfirst, word_ends_mente, word_looks_like_verb]
+
+        self.features = features = [word_lower, word_istitle, word_isupper, word_isdigit, word_looks_like_verb, word_ends_mente, word_ends_cion]
+        prev_features = [PrevWord(feat) for feat in features]
+        [self.features.append(NPrevTags(k)) for k in range(1, n + 1)]
+        [self.features.append(WordLongerThan(k)) for k in [6, 12, 18, 26]]
+        self.features = self.features + prev_features
+        self.features.append(next_word_lower)
+
+        print(self.features)
         self.vect = vect = Vectorizer(features)
         vect.fit(self.sents_histories(tagged_sents))
         self.model = MultinomialNB()
@@ -52,7 +61,6 @@ class MEMM:
             for i in range(len(words)):
                 yield History(list(words), tags[i: i + self.n - 1], i)
 
-
     def sent_histories(self, tagged_sent):
         """
         Iterator over the histories of a tagged sentence.
@@ -62,7 +70,7 @@ class MEMM:
         [words, tags] = zip(*tagged_sent)
         tags = tuple((self.n - 1) * ['<s>']) + tags
         for i in range(len(words)):
-            yield History(list(words), tags[i : i + self.n - 1], i)
+            yield History(list(words), tags[i: i + self.n - 1], i)
 
     def sents_tags(self, tagged_sents):
         """
