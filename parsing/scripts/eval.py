@@ -47,7 +47,14 @@ if __name__ == '__main__':
     print('Parsing...')
     t1 = datetime.now()
     hits, unlabelled_hits, total_gold, total_model = 0, 0, 0, 0
-    n = len(parsed_sents)
+    
+    if opts['-m'] is not None:
+        length = int(opts['-m']) 
+        parsed_sents = [tree for tree in parsed_sents if len(tree.pos()) <= length]
+        n = len(parsed_sents)
+    else:
+        length = sys.maxsize
+        n = len(parsed_sents)
     format_str = '{:3.1f}% ({}/{}) (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
     progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
     for i, gold_parsed_sent in enumerate(parsed_sents):
@@ -57,7 +64,7 @@ if __name__ == '__main__':
 
         tagged_sent = gold_parsed_sent.pos()
 
-        if len(tagged_sent) >= length:
+        if len(tagged_sent) > length:
             continue
 
         # parse

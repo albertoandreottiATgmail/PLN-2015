@@ -1,3 +1,14 @@
+Ex 1,
+
+Parsed 1444 sentences
+            Labeleded                           Unlabeled
+            Precision     Recall      F1        Precision     Recall      F1      Time(secs)
+lbranch     8.81%         14.57%      10.98%    14.71%        24.33%      18.33%  2  
+rbranch     8.81%         14.57%      10.98%    8.87%         14.68%      11.06%  2
+flat        99.93%        14.57%      25.43%    100%          14.58%      25.45%  1
+
+
+
 Ex 3,
 Parsed 3492 sentences
 Labeled
