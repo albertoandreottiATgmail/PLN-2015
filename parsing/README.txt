@@ -10,16 +10,16 @@ flat        99.93%        14.57%      25.43%    100%          14.58%      25.45%
 
 
 Ex 3,
-Parsed 3492 sentences
+Parsed 1444 sentences
 Labeled
-  Precision: 70.44% 
-  Recall: 71.34% 
-  F1: 70.89% 
+  Precision: 70.15% 
+  Recall: 70.62% 
+  F1: 70.38% 
 Unlabelled
-  Precision: 72.85% 
-  Recall: 73.79% 
-  F1: 73.32% 
-Total time: 30241 secs
+  Precision: 72.50% 
+  Recall: 72.98% 
+  F1: 72.74% 
+Total time: 1041
 
 
 

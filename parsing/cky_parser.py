@@ -33,46 +33,39 @@ class CKYParser:
                     pi[(i, i)][rule_lhs] = rule.logprob()
                     bp[(i, i)][rule_lhs] = (rule, i)
 
+        prods = defaultdict(list)
+        [prods[(str(prod.rhs()[0]), str(prod.rhs()[1]))].append(prod) for prod in self.grammar.productions() if len(prod.rhs()) == 2]
         for l in range(1, n):
             for i in range(1, n - l + 1):
                 j = i + l
-                for X_rule in self.grammar.productions():
-                    if len(X_rule.rhs()) < 2:
-                        continue
-                    X = str(X_rule.lhs())
+                from itertools import product
+                for s in range(i, j):
+                    for Y, Z in product(pi[(i, s)].keys(), pi[(s + 1, j)].keys()):
+                        if (Y, Z) in prods:
+                            for prod in prods[(Y, Z)]:
+                                candidate = (prod.logprob() + pi[(i, s)][Y] + pi[(s + 1, j)][Z], s, prod)
+                                X = str(candidate[2].lhs())
+                                if X in pi[(i, j)]:
+                                    if candidate[0] > pi[(i, j)][X]:
+                                        pi[(i, j)][X] = candidate[0]
+                                        bp[(i, j)][X] = (candidate[2], candidate[1])
+                                else:
+                                    pi[(i, j)][X] = candidate[0]
+                                    bp[(i, j)][X] = (candidate[2], candidate[1])
 
-                    candidates = []
-                    Z = str(X_rule.rhs()[0])
-                    Y = str(X_rule.rhs()[1])
-
-                    for s in range(i, j):
-                        if Z in pi[(i, s)] and Y in pi[(s + 1, j)]:
-                            candidates.append((X_rule.logprob() + pi[(i, s)][Z] + pi[(s + 1, j)][Y], s))
-
-                    if len(candidates) == 0:
-                        continue
-
-                    top = max(candidates, key=lambda x: x[0])
-
-                    if X in pi[(i, j)]:
-                        if top[0] > pi[(i, j)][X]:
-                            pi[(i, j)][X] = top[0]
-                            bp[(i, j)][X] = (X_rule, top[1])
-                    else:
-                        pi[(i, j)][X] = top[0]
-                        bp[(i, j)][X] = (X_rule, top[1])
-
-        def populate_tree(i, j, lhs):
-            if i != j:
-                entry = bp[(i, j)][lhs]
-                return Tree(lhs, [populate_tree(i, entry[1], str(entry[0].rhs()[0])),
-                            populate_tree(entry[1] + 1, j, str(entry[0].rhs()[1]))])
+        #for k in pi:
+        #    print(k, pi[k])
+        def populate_tree(u, v, lhs):
+            if u != v:
+                entry = bp[(u, v)][lhs]
+                return Tree(lhs, [populate_tree(u, entry[1], str(entry[0].rhs()[0])),
+                            populate_tree(entry[1] + 1, v, str(entry[0].rhs()[1]))])
             else:
                 # use i,j to fetch the word from the sentence in the upcfg case
                 if self._is_lexicalized:
-                    return Tree(lhs, [str(bp[(i, j)][lhs][0].rhs()[0])])
+                    return Tree(lhs, [str(bp[(u, v)][lhs][0].rhs()[0])])
                 else:
-                    return Tree(lhs, [lex[i - 1]])
+                    return Tree(lhs, [lex[u - 1]])
 
         if self._start in pi[(1, n)]:
             tree = populate_tree(1, n, self._start)

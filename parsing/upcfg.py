@@ -15,11 +15,10 @@ class UPCFG:
         prods = []
         count = 0
         for t in parsed_sents:
-            count += 1
             t2 = deepcopy(t)
             unlexicalize(t2)
             t2.collapse_unary(collapsePOS=True)
-            t2.chomsky_normal_form(factor='right', horzMarkov=markov_window)
+            t2.chomsky_normal_form(horzMarkov=markov_window)
             [prods.append(p) for p in t2.productions()]
 
         self._grammar = grammar.induce_pcfg(grammar.Nonterminal(start), prods)
