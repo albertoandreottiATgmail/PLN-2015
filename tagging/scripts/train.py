@@ -20,10 +20,11 @@ from corpus.ancora import SimpleAncoraCorpusReader
 from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
+from tagging.logistic import LogisticRegression
 
 
 models = {
-    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM
+    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': LogisticRegression
 }
 
 
