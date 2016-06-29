@@ -20,11 +20,11 @@ from corpus.ancora import SimpleAncoraCorpusReader
 from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
-from tagging.logistic import LogisticRegression
+from tagging.logistic import LogisticTagger
 
 
 models = {
-    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': LogisticRegression
+    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': LogisticTagger
 }
 
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     # load the data
     files = 'CESS-CAST-(A|AA|P)/.*\.tbf\.xml'
-    corpus = SimpleAncoraCorpusReader('ancora/ancora-2.0/', files)
+    corpus = SimpleAncoraCorpusReader('../../ancora/ancora-2.0/', files)
     sents = list(corpus.tagged_sents())
 
     # train the model

@@ -1,4 +1,5 @@
 # https://docs.python.org/3/library/unittest.html
+# -*- coding: latin-1 -*-
 from unittest import TestCase
 from math import log2
 
@@ -12,7 +13,7 @@ class TestMLHMM(TestCase):
         self.tagged_sents = [
             list(zip('el gato come pescado .'.split(),
                  'D N V N P'.split())),
-            list(zip('la gata come salmÃ³n .'.split(),
+            list(zip('la gata come salmón .'.split(),
                  'D N V N P'.split())),
         ]
 
@@ -118,7 +119,7 @@ class TestMLHMM(TestCase):
     def test_unknown(self):
         hmm = MLHMM(2, self.tagged_sents)
 
-        known = {'el', 'gato', 'come', 'pescado', '.', 'la', 'gata', 'salmÃ³n'}
+        known = {'el', 'gato', 'come', 'pescado', '.', 'la', 'gata', 'salmón'}
         for w in known:
             self.assertFalse(hmm.unknown(w), w)
 
