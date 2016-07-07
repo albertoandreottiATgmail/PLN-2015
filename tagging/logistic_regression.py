@@ -172,7 +172,7 @@ class LogisticRegression(object):
         else:
             raise NotImplementedError()
 
-    def shared_dataset(data_xy, borrow=True):
+    def shared_dataset(self, data_xy, borrow=True):
         """ Function that loads the dataset into shared variables
 
         The reason we store our dataset in shared variables is to allow
@@ -214,9 +214,9 @@ class LogisticRegression(object):
         :param n_epochs: maximal number of epochs to run the optimizer
 
         """
-        train_set_x, train_set_y = self.shared_dataset(self.datasets[0])
-        valid_set_x, valid_set_y = self.shared_dataset(self.datasets[1])
-        test_set_x, test_set_y = self.shared_dataset(self.datasets[2])
+        train_set_x, train_set_y = self.shared_dataset(self.dataset[0])
+        valid_set_x, valid_set_y = self.shared_dataset(self.dataset[1])
+        test_set_x, test_set_y = self.shared_dataset(self.dataset[2])
 
         # compute number of minibatches for training, validation and testing
         n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
@@ -230,7 +230,7 @@ class LogisticRegression(object):
 
         # allocate symbolic variables for the data
         index = T.lscalar()  # index to a [mini]batch
-        x = T.matrix('x')  # data, presented as rasterized images
+        x = self.input #T.matrix('x')  # data, presented as rasterized images
         y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
 
         # classifier -> self
@@ -306,7 +306,8 @@ class LogisticRegression(object):
         epoch = 0
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
-            for minibatch_index in range(n_train_batches):
+            for minibatch_index in range(n_train_batches - 1):
+                print (minibatch_index)
                 minibatch_avg_cost = train_model(minibatch_index)
                 # iteration number
                 iter = (epoch - 1) * n_train_batches + minibatch_index

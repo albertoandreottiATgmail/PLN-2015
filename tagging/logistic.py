@@ -21,8 +21,11 @@ class LogisticTagger:
         tagged_sents -- training sentences, each one being a list of pairs.
         """
         self.vec_len = vec_len = 300
-        self.ending = [0.9] * self.vec_len
-        self.start = [0.1] * self.vec_len
+        self.ending = numpy.ndarray(shape = (self.vec_len, ))
+        self.ending.fill(0.9)
+
+        self.start = numpy.ndarray(shape = (self.vec_len, ))
+        self.start.fill(0.1)
 
         # TODO: if a trained model is found, don't train
         # map to vectors
@@ -40,34 +43,32 @@ class LogisticTagger:
         for sent in tagged_sents:
             psent = [('<s>', '<s>')] * b + sent + [('</s>', '</s>')] * a
             for i in range(len(sent)):
-                datapoint = []
+                datapoint = numpy.empty([0])
                 for word, tag in psent[i: i + a + b + 1]:
-                    datapoint.append(self.embedding(word))
+                    datapoint = numpy.concatenate((datapoint, self.embedding(word)), axis = 0)
 
                 # register the tag, assign a number if this is the first time we see it
-                tag_number[psent[i + b][1]]
+                target = tag_number[psent[i + b][1]]
 
-                target = psent[i + b][1]
                 rnd = random()
-
                 if rnd < 0.7:
                     train_x.append(datapoint)
-                    train_y = target
-                if rnd < 0.8:
+                    train_y.append(target)
+                elif rnd < 0.8:
                     valid_x.append(datapoint)
-                    valid_y = target
+                    valid_y.append(target)
                 else:
                     test_x.append(datapoint)
-                    test_y = target
+                    test_y.append(target)
 
         # generate symbolic variables for input (x and y represent a
         # minibatch)
-        x = T.matrix('x')  # data, presented as rasterized images
+        x = T.matrix('x')  # data, presented as rasterized consecutive vectors.
         dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
 
         # construct the logistic regression class
         # Each vector of embeddings has 300 elements
-        classifier = LogisticRegression(dataset, input = x, n_in = 300 * (a + b + n), n_out = len(tag_number))
+        classifier = LogisticRegression(dataset, x, n_in = 300 * (a + b + n), n_out = len(tag_number) + 1)
         classifier.sgd_optimization_ancora()
 
     def tag(self, sent):
