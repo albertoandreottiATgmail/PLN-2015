@@ -197,7 +197,7 @@ class LogisticRegression(object):
         # lets ous get around this issue
         return shared_x, T.cast(shared_y, 'int32')
 
-    def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=1000,
+    def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=10,
                                datasets = None,
                                batch_size = 600):
         """
@@ -306,17 +306,16 @@ class LogisticRegression(object):
         epoch = 0
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
-            for minibatch_index in range(n_train_batches - 1):
-                print (minibatch_index)
+            for minibatch_index in range(n_train_batches):
                 minibatch_avg_cost = train_model(minibatch_index)
                 # iteration number
                 iter = (epoch - 1) * n_train_batches + minibatch_index
-
                 if (iter + 1) % validation_frequency == 0:
                     # compute zero-one loss on validation set
                     validation_losses = [validate_model(i)
                                          for i in range(n_valid_batches)]
                     this_validation_loss = numpy.mean(validation_losses)
+                    print('validation loss: ' + str(this_validation_loss))
 
                     print(
                         'epoch %i, minibatch %i/%i, validation error %f %%' %

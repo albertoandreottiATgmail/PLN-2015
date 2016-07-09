@@ -13,8 +13,9 @@ class LogisticTagger:
 
     # this should be a lambda, but lambdas cannot be pickled!
     def inc(self):
-        self.tag_count = self.tag_count + 1
-        return self.tag_count
+        temp = self.tag_count
+        self.tag_count += 1
+        return temp
 
     def __init__(self, tagged_sents):
         """
@@ -68,7 +69,7 @@ class LogisticTagger:
 
         # construct the logistic regression class
         # Each vector of embeddings has 300 elements
-        classifier = LogisticRegression(dataset, x, n_in = 300 * (a + b + n), n_out = len(tag_number) + 1)
+        classifier = LogisticRegression(dataset, x, n_in = 300 * (a + b + n), n_out = len(tag_number))
         classifier.sgd_optimization_ancora()
 
     def tag(self, sent):
