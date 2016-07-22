@@ -20,11 +20,11 @@ from corpus.ancora import SimpleAncoraCorpusReader
 from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
-from tagging.logistic import LogisticTagger
+from tagging.vector import VectorTagger
 
 
 models = {
-    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': LogisticTagger
+    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': VectorTagger
 }
 
 

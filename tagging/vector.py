@@ -9,7 +9,8 @@ import theano
 import numpy
 
 
-class LogisticTagger:
+# handles the vector representation of words
+class VectorTagger:
 
     # this should be a lambda, but lambdas cannot be pickled!
     def inc(self):
@@ -33,6 +34,7 @@ class LogisticTagger:
         self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary = True)
 
         self.n = b = a = n = 1
+        b = 2
         self.tag_count = 0
         train_x , test_x , valid_x = [], [], []
         train_y , test_y , valid_y = [], [], []
@@ -62,14 +64,19 @@ class LogisticTagger:
                     test_x.append(datapoint)
                     test_y.append(target)
 
+        # TODO: move this inside LogisticRegression, and NeuralNetwork classes
         # generate symbolic variables for input (x and y represent a
         # minibatch)
-        x = T.matrix('x')  # data, presented as rasterized consecutive vectors.
+        x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
         dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
 
-        # construct the logistic regression class
+        # Construct the actual model class
         # Each vector of embeddings has 300 elements
         classifier = LogisticRegression(dataset, x, n_in = 300 * (a + b + n), n_out = len(tag_number))
+
+        # clean this stuff so GC is triggered
+        dataset = None
+        self.model = None
         classifier.sgd_optimization_ancora()
 
     def tag(self, sent):
