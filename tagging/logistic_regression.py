@@ -197,7 +197,7 @@ class LogisticRegression(object):
         # lets ous get around this issue
         return shared_x, T.cast(shared_y, 'int32')
 
-    def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=10,
+    def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=100,
                                datasets = None,
                                batch_size = 600):
         """
@@ -217,6 +217,7 @@ class LogisticRegression(object):
         train_set_x, train_set_y = self.shared_dataset(self.dataset[0])
         valid_set_x, valid_set_y = self.shared_dataset(self.dataset[1])
         test_set_x, test_set_y = self.shared_dataset(self.dataset[2])
+        self.dataset = None
 
         # compute number of minibatches for training, validation and testing
         n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size

@@ -34,7 +34,6 @@ class VectorTagger:
         self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary = True)
 
         self.n = b = a = n = 1
-        b = 2
         self.tag_count = 0
         train_x , test_x , valid_x = [], [], []
         train_y , test_y , valid_y = [], [], []

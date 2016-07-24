@@ -1,0 +1,16 @@
+epoch 57, minibatch 493/493, validation error 8.416667 %
+     epoch 57, minibatch 493/493, test error of best model 8.270238 %
+validation loss: 0.084119047619
+epoch 58, minibatch 493/493, validation error 8.411905 %
+     epoch 58, minibatch 493/493, test error of best model 8.257143 %
+validation loss: 0.0839523809524
+epoch 59, minibatch 493/493, validation error 8.395238 %
+     epoch 59, minibatch 493/493, test error of best model 8.240476 %
+validation loss: 0.0839523809524
+epoch 60, minibatch 493/493, validation error 8.395238 %
+validation loss: 0.0839761904762
+epoch 61, minibatch 493/493, validation error 8.397619 %
+Optimization complete with best validation score of 8.395238 %,with test performance 8.240476 %
+The code run for 62 epochs, with 0.268845 epochs/sec
+The code for file logistic_regression.py ran for 230.6s
+
