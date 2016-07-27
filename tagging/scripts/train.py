@@ -24,7 +24,7 @@ from tagging.vector import VectorTagger
 
 
 models = {
-    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'logistic': VectorTagger
+    'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'vector:logreg': VectorTagger, 'vector:mlp': VectorTagger
 }
 
 
@@ -37,10 +37,11 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # train the model
+    first_chunk = opts['-m'].split(':')[1]
     if opts['-m'].startswith('hmm') or opts['-m'].startswith('memm'):
-        model = models[opts['-m'].split(':')[0]](int(opts['-m'].split(':')[1]), sents)
+        model = models[opts['-m'].split(':')[0]](int(first_chunk), sents)
     else:
-        model = models[opts['-m']](sents)
+        model = models[opts['-m']](first_chunk, sents)
 
     # save it
     filename = opts['-o']

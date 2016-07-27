@@ -75,6 +75,7 @@ class LogisticRegression(object):
 
         """
         self.dataset = dataset
+
         # start-snippet-1
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         self.W = theano.shared(
@@ -347,8 +348,7 @@ class LogisticRegression(object):
                                 '     epoch %i, minibatch %i/%i, test error of'
                                 ' best model %f %%'
                             ) %
-                            (
-                                epoch,
+                            (   epoch,
                                 minibatch_index + 1,
                                 n_train_batches,
                                 test_score * 100.
