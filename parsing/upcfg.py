@@ -39,6 +39,13 @@ class UPCFG:
 
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
-        words = [x[1] for x in tagged_sent]
-        tags = [x[0] for x in tagged_sent]
-        return self._parser.parse(words, tags)[1]
+        words = [x[0] for x in tagged_sent]
+        tags = [x[1] for x in tagged_sent]
+
+        # unlex tree
+        tree = self._parser.parse(tags)[1]
+        for leafPos, word in zip(tree.treepositions('leaves'), words):
+            tree[leafPos] = word
+
+
+        return tree

@@ -63,8 +63,8 @@ class TestUPCFG(TestCase):
         tags = 'Det Noun Verb Noun Adj'.split()
         tagged_sent = list(zip(sent, tags))
         tree = model.parse(tagged_sent)
-        #t.pretty_print()
-
+        tree.pretty_print()
+        t.pretty_print()
         self.assertEqual(tree, t)
 
     def test_parse_no_parse_returns_flat(self):
@@ -84,4 +84,6 @@ class TestUPCFG(TestCase):
         tree = model.parse(tagged_sent)
 
         tree2 = Tree.fromstring("(S (Noun gato) (Det el) (Verb come) (Noun pescado) (Adj crudo))")
+        tree.pretty_print()
+        tree2.pretty_print()
         self.assertEqual(tree, tree2)

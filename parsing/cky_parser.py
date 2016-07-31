@@ -53,10 +53,11 @@ class CKYParser:
                                     pi[(i, j)][X] = candidate[0]
                                     bp[(i, j)][X] = Tree(str(prod.lhs()), [bp[(i, s)][str(prod.rhs()[0])], bp[(s + 1, j)][str(prod.rhs()[1])]])
 
-        #for k in pi:
-        #    print(k, pi[k])
-        return pi[(1, n)]['S'], bp[(1, n)]['S']
-
+        if self._start in bp[(1, n)]:
+            return pi[(1, n)][self._start], bp[(1, n)][self._start]
+        else:
+            trees = [bp[(i, i)].popitem()[1] for i in range(1, n + 1)]
+            return 0.0, Tree(self._start, trees)
         
 
 

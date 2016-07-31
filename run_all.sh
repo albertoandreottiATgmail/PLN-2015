@@ -1,4 +1,3 @@
-nosetests parsing/tests/test_upcfg.py  
 nosetests parsing/tests/test_util.py
 #Exercise 1
 nosetests parsing/tests/test_baselines.py
@@ -15,6 +14,7 @@ python parsing/scripts/eval.py -i flat -m 20
 nosetests parsing/tests/test_cky_parser.py
 
 #Exercise 3
+nosetests parsing/tests/test_upcfg.py
 python parsing/scripts/train.py -o upcfg -m upcfg 
 python parsing/scripts/eval.py -i upcfg -m 20
 
