@@ -59,10 +59,13 @@ if __name__ == '__main__':
     progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
     for i, gold_parsed_sent in enumerate(parsed_sents):
 
-        if i > limit:
+        if i > limit - 1:
             break
 
         tagged_sent = gold_parsed_sent.pos()
+
+        #gold_parsed_sent.pretty_print()
+        #print(gold_parsed_sent)
 
         if len(tagged_sent) > length:
             continue
@@ -73,10 +76,9 @@ if __name__ == '__main__':
         # compute labelled scores
         gold_spans = spans(gold_parsed_sent, unary=False)
         model_spans = spans(model_parsed_sent, unary=False)
-
         hits += len(gold_spans & model_spans)
 
-        # unlabelled hits
+        # unlabelled hits - do not care about the label, ('X', 3, 4) is the same as ('Y', 3, 4)
         unlabelled_hits += len({x[1:] for x in gold_spans} & {x[1:] for x in model_spans})
 
         total_gold += len(gold_spans)

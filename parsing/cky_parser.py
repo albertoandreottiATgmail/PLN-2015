@@ -24,14 +24,14 @@ class CKYParser:
         # initialize
         n = len(sent)
         self._pi = pi = defaultdict(lambda: defaultdict(float))
-        self._bp = bp = defaultdict(lambda: defaultdict(float))
+        self._bp = bp = defaultdict(lambda: dict())
 
         for i in range(1, n + 1):
             for rule in self.grammar.productions():
                 if len(rule.rhs()) == 1 and rule.rhs() == (sent[i - 1], ):
                     rule_lhs = str(rule.lhs())
                     pi[(i, i)][rule_lhs] = rule.logprob()
-                    bp[(i, i)][rule_lhs] = (rule, i)
+                    bp[(i, i)][rule_lhs] = Tree.fromstring('( ' + rule_lhs + ' ' + sent[i - 1] + ' )')
 
         prods = defaultdict(list)
         [prods[(str(prod.rhs()[0]), str(prod.rhs()[1]))].append(prod) for prod in self.grammar.productions() if len(prod.rhs()) == 2]
@@ -48,29 +48,15 @@ class CKYParser:
                                 if X in pi[(i, j)]:
                                     if candidate[0] > pi[(i, j)][X]:
                                         pi[(i, j)][X] = candidate[0]
-                                        bp[(i, j)][X] = (candidate[2], candidate[1])
+                                        bp[(i, j)][X] = Tree(str(prod.lhs()), [bp[(i, s)][str(prod.rhs()[0])], bp[(s + 1, j)][str(prod.rhs()[1])]])
                                 else:
                                     pi[(i, j)][X] = candidate[0]
-                                    bp[(i, j)][X] = (candidate[2], candidate[1])
+                                    bp[(i, j)][X] = Tree(str(prod.lhs()), [bp[(i, s)][str(prod.rhs()[0])], bp[(s + 1, j)][str(prod.rhs()[1])]])
 
         #for k in pi:
         #    print(k, pi[k])
-        def populate_tree(u, v, lhs):
-            if u != v:
-                entry = bp[(u, v)][lhs]
-                return Tree(lhs, [populate_tree(u, entry[1], str(entry[0].rhs()[0])),
-                            populate_tree(entry[1] + 1, v, str(entry[0].rhs()[1]))])
-            else:
-                # use i,j to fetch the word from the sentence in the upcfg case
-                if self._is_lexicalized:
-                    return Tree(lhs, [str(bp[(u, v)][lhs][0].rhs()[0])])
-                else:
-                    return Tree(lhs, [lex[u - 1]])
+        return pi[(1, n)]['S'], bp[(1, n)]['S']
 
-        if self._start in pi[(1, n)]:
-            tree = populate_tree(1, n, self._start)
-            tree.un_chomsky_normal_form()
-            return pi[(1, n)][self._start], tree
-        else:
-            children = [Tree(tag, [word]) for tag, word, in zip(sent, lex)]
-            return 0.0, Tree(self._start, children)
+        
+
+
