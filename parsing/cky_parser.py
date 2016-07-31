@@ -28,7 +28,7 @@ class CKYParser:
 
         for i in range(1, n + 1):
             for rule in self.grammar.productions():
-                if len(rule.rhs()) == 1 and rule.rhs() == (sent[i - 1], ):
+                if len(rule.rhs()) == 1 and str(rule.rhs()[0]) == sent[i - 1]:
                     rule_lhs = str(rule.lhs())
                     pi[(i, i)][rule_lhs] = rule.logprob()
                     bp[(i, i)][rule_lhs] = Tree.fromstring('( ' + rule_lhs + ' ' + sent[i - 1] + ' )')

@@ -83,8 +83,6 @@ class TestCKYParser(TestCase):
                     (VP (Verb come) (NP (Noun pescado) (Adj crudo)))
                 )
             """)
-        print(t2)
-        print(t)
         self.assertEqual(t, t2)
 
         # check log probability
@@ -95,36 +93,46 @@ class TestCKYParser(TestCase):
         
         sentence = 'I drove down the road in the car'
 
+        # rely on : (VP -> VP PP[.5]) > (NP -> NP PP[0.45])
+        # replace VP -> VB PP             [.5]
+        #         VP -> VP PP             [.5]
+        # with    VP -> VB PP             [.6]
+        #         VP -> VP PP             [.4]
+        # to obtain the wrong parse tree.
+
         correct_grammar = PCFG.fromstring(
             """
                 S -> NP VP              [1.0]
-                VP -> Verb PP           [1.0]
+                VP -> VB PP             [.5]
+                VP -> VP PP             [.5]
                 PP -> IN NP             [1.0]
                 NP -> NP PP             [0.45] 
-                NP -> Det Noun          [0.45]
+                NP -> Det NN            [0.45]
                 NP -> I                 [0.1]
-                Verb -> drove           [1.0]
+                VB -> drove             [1.0]
                 IN -> down              [0.5]
                 IN -> in                [0.5]
                 Det -> the              [1.0]
-                Noun -> road            [.5]
-                Noun -> car             [.5]
+                NN -> road            [.5]
+                NN -> car             [.5]
             """)
-        parser = CKYParser(correct_grammar)
 
+        parser = CKYParser(correct_grammar)
         tree =  Tree.fromstring(
             """
                 (S
                     (NP I)
                     (VP
-                         (VP (Verb drove) (PP (IN down) (NP (Det the) (NN road))))
+                         (VP (VB drove) (PP (IN down) (NP (Det the) (NN road))))
                          (PP (IN in) (NP (Det the) (NN car)))
                     )
                 )
             """)
+        tree.pretty_print()
+        parsed = parser.parse(sentence.split())[1]
+        parsed.pretty_print()
+        self.assertEqual(parsed, tree)
 
-        #parser.parse(sentence.split()).pretty_print()
-        #self.assertEqual(parser.parse(sentence.split()), tree)
 
     def assertEqualPi(self, pi1, pi2):
         self.assertEqual(set(pi1.keys()), set(pi2.keys()))
