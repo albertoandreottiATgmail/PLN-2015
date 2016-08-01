@@ -1,6 +1,7 @@
 Ex 1,
 
-Parsed 1444 sentences
+Parsed 1444 sentences,
+
             Labeleded                           Unlabeled
             Precision     Recall      F1        Precision     Recall      F1      Time(secs)
 lbranch     8.81%         14.57%      10.98%    14.71%        24.33%      18.33%  2  
@@ -10,35 +11,17 @@ flat        99.93%        14.57%      25.43%    100%          14.58%      25.45%
 
 
 Ex 3,
-Parsed 1444 sentences
-Labeled
-  Precision: 70.15% 
-  Recall: 70.62% 
-  F1: 70.38% 
-Unlabelled
-  Precision: 72.50% 
-  Recall: 72.98% 
-  F1: 72.74% 
-Total time: 1041
-
+Total		Labeled			Unlabeled		Time(sec)
+Sentences    	P	R	F1	P	R	F1
+1444		73.19%	72.89%	73.04%	75.30%	74.99%	75.15%	115	
 
 
 Ex4,
 
-N = 0, 99.9% (3489/3492)  labeled, (P=71.38%, R=71.44%, F1=71.41%)
-                          unlabeled, (P=73.37%, R=73.43%, F1=73.40%)
-                          Total time: 2786 secs
-
-N = 1, 99.9% (3489/3492)  labeled, (P=74.92%, R=75.12%, F1=75.02%)
-                          unlabeled, (P=76.88%, R=77.09%, F1=76.99%)
-                          Total time: 5534
-
-N = 2, 99.9% (3489/3492)  labeled, (P=73.22%, R=73.34%, F1=73.28%)
-                          unlabelled, (P=75.4%, R=75.52%, F1=75.46%)
-                          Total time: 10812
-
-N = 3 99.9% (3489/3492)   labeled, (P=71.28%, R=71.70%, F1=71.49%)
-                          unlabelled, (P=73.79%, R=74.22%, F1=74.00%)
-                          Total time: 16986
-
+	Total		Labeled			Unlabeled		Time(sec)
+N	Sentences    	P	R	F1	P	R	F1
+0	1444		70.25%	70.02%	70.14%	72.11%	71.88%	72.00%	76
+1	1444		74.71%	74.62%	74.66%	76.58%	76.48%	76.53%	74
+2	1444		74.80%	74.28%	74.54%	76.72%	76.19%	76.45%	96
+3	1444		74.05%	73.41%	73.73%	76.21%	75.56%	75.88%	98
 
