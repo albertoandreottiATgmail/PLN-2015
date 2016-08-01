@@ -1,9 +1,6 @@
 from collections import defaultdict
 from nltk.tree import Tree
-from math import log
 from itertools import product
-
-log2 = lambda x: log(x, 2.0)
 
 
 class CKYParser:
@@ -14,12 +11,15 @@ class CKYParser:
         """
         self.grammar = grammar
         self._start = str(grammar.start())
-        self.single_rules = [rule for rule in self.grammar.productions() if len(rule.rhs()) == 1]
-        self.double_rules = [rule for rule in self.grammar.productions() if len(rule.rhs()) == 2]
+        self.single_rules = [rule for rule in self.grammar.productions()
+                             if len(rule.rhs()) == 1]
+        self.double_rules = [rule for rule in self.grammar.productions()
+                             if len(rule.rhs()) == 2]
 
         # map (Y, Z) -> X, from rhs to production
         self.prods = defaultdict(list)
-        [self.prods[(str(prod.rhs()[0]), str(prod.rhs()[1]))].append(prod) for prod in self.double_rules]
+        [self.prods[(str(prod.rhs()[0]), str(prod.rhs()[1]))].append(prod)
+         for prod in self.double_rules]
 
     def parse(self, sent, lex=[]):
         """Parse a sequence of terminals.
@@ -31,16 +31,14 @@ class CKYParser:
         self._pi = pi = defaultdict(lambda: defaultdict(float))
         self._bp = bp = defaultdict(lambda: dict())
 
-
         for i in range(1, n + 1):
             for rule in self.single_rules:
                 if str(rule.rhs()[0]) == sent[i - 1]:
                     rule_lhs = str(rule.lhs())
                     pi[(i, i)][rule_lhs] = rule.logprob()
-                    bp[(i, i)][rule_lhs] = Tree(rule_lhs, [str(rule.rhs()[0])])#Tree.fromstring('( ' + rule_lhs + ' ' + sent[i - 1] + ' )')
+                    bp[(i, i)][rule_lhs] = Tree(rule_lhs, [str(rule.rhs()[0])])
 
         prods = self.prods
-
         for l in range(1, n):
             for i in range(1, n - l + 1):
                 j = i + l
@@ -64,6 +62,3 @@ class CKYParser:
         else:
             trees = [bp[(i, i)].popitem()[1] for i in range(1, n + 1)]
             return 0.0, Tree(self._start, trees)
-
-
-

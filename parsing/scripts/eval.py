@@ -47,10 +47,11 @@ if __name__ == '__main__':
     print('Parsing...')
     t1 = datetime.now()
     hits, unlabelled_hits, total_gold, total_model = 0, 0, 0, 0
-    
+
     if opts['-m'] is not None:
-        length = int(opts['-m']) 
-        parsed_sents = [tree for tree in parsed_sents if len(tree.pos()) <= length]
+        length = int(opts['-m'])
+        parsed_sents = [tree for tree in parsed_sents
+                        if len(tree.pos()) <= length]
         n = len(parsed_sents)
     else:
         length = sys.maxsize
@@ -72,7 +73,8 @@ if __name__ == '__main__':
         model_spans = spans(model_parsed_sent, unary=False)
         hits += len(gold_spans & model_spans)
 
-        # unlabelled hits - do not care about the label, ('X', 3, 4) is the same as ('Y', 3, 4)
+        # unlabelled hits - do not care about the label,
+        # ('X', 3, 4) is the same as ('Y', 3, 4)
         unlabelled_hits += len({x[1:] for x in gold_spans} & {x[1:] for x in model_spans})
 
         total_gold += len(gold_spans)

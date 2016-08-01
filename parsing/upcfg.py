@@ -4,6 +4,7 @@ from parsing.util import unlexicalize, lexicalize
 from copy import deepcopy
 from nltk.grammar import Nonterminal as N
 
+
 class UPCFG:
     """Unlexicalized PCFG.
     """
@@ -16,7 +17,7 @@ class UPCFG:
         for t in parsed_sents:
             t2 = unlexicalize(deepcopy(t))
             t2.chomsky_normal_form(horzMarkov=markov_window)
-            t2.collapse_unary(collapsePOS = True, collapseRoot=True)
+            t2.collapse_unary(collapsePOS=True, collapseRoot=True)
             [prods.append(p) for p in t2.productions()]
 
         self._grammar = grammar.induce_pcfg(N(start), prods)
