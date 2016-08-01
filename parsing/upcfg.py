@@ -1,8 +1,8 @@
 from nltk import grammar
 from parsing.cky_parser import CKYParser
-from parsing.util import unlexicalize
+from parsing.util import unlexicalize, lexicalize
 from copy import deepcopy
-
+from nltk.grammar import Nonterminal as N
 
 class UPCFG:
     """Unlexicalized PCFG.
@@ -13,20 +13,17 @@ class UPCFG:
         parsed_sents -- list of training trees.
         """
         prods = []
-        count = 0
         for t in parsed_sents:
-            t2 = deepcopy(t)
-            unlexicalize(t2)
-            t2.collapse_unary(collapsePOS=True)
+            t2 = unlexicalize(deepcopy(t))
             t2.chomsky_normal_form(horzMarkov=markov_window)
+            t2.collapse_unary(collapsePOS = True, collapseRoot=True)
             [prods.append(p) for p in t2.productions()]
 
-        self._grammar = grammar.induce_pcfg(grammar.Nonterminal(start), prods)
+        self._grammar = grammar.induce_pcfg(N(start), prods)
+        self._parser = CKYParser(self._grammar)
+
         print('is chomsky?: ', self._grammar.is_chomsky_normal_form())
         print('is binarised?: ', self._grammar.is_binarised())
-        self._parser = CKYParser(self._grammar)
-        self._parser._is_lexicalized = False
-        self._parser._start = str(self._grammar.start())
         print('start symbol::', str(self._grammar.start()))
 
     def productions(self):
@@ -39,13 +36,10 @@ class UPCFG:
 
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
-        words = [x[0] for x in tagged_sent]
-        tags = [x[1] for x in tagged_sent]
+        words = [w for w, t in tagged_sent]
+        tags = [t for w, t in tagged_sent]
 
         # unlex tree
-        tree = self._parser.parse(tags)[1]
-        for leafPos, word in zip(tree.treepositions('leaves'), words):
-            tree[leafPos] = word
-
-
+        tree = lexicalize(self._parser.parse(tags)[1], words)
+        tree.un_chomsky_normal_form()
         return tree

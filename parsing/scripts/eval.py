@@ -64,12 +64,6 @@ if __name__ == '__main__':
 
         tagged_sent = gold_parsed_sent.pos()
 
-        #gold_parsed_sent.pretty_print()
-        #print(gold_parsed_sent)
-
-        if len(tagged_sent) > length:
-            continue
-
         # parse
         model_parsed_sent = model.parse(tagged_sent)
 
