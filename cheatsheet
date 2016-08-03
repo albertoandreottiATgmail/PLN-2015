@@ -1,0 +1,3 @@
+workon PLN-2015
+export PYTHONPATH=./tagging:.
+python3.4 tagging/scripts/train.py -o logistic -m vector:logreg
