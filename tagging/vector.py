@@ -19,7 +19,7 @@ class VectorTagger:
         self.tag_count += 1
         return temp
 
-    def __init__(self,  model, tagged_sents):
+    def __init__(self, model, tagged_sents):
         """
         tagged_sents -- training sentences, each one being a list of pairs.
         """
@@ -35,38 +35,35 @@ class VectorTagger:
         # map to vectors
         self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary = True)
 
-        self.n = a = n = 1
-        b = 3
+        self.n = a = b = n = 1
         self.tag_count = 0
         train_x , test_x , valid_x = [], [], []
         train_y , test_y , valid_y = [], [], []
-
 
         # dictionary tag -> number
         tag_number = defaultdict(self.inc)
 
         for sent in tagged_sents:
             psent = [('<s>', '<s>')] * b + sent + [('</s>', '</s>')] * a
-            for i in range(len(sent)):
+            tags = []
+            embeddings = []
+            for word, tag in psent:
                 datapoint = numpy.empty([0])
-                for word, tag in psent[i: i + a + b + 1]:
-                    datapoint = numpy.concatenate((datapoint, self.embedding(word)), axis = 0)
+                embeddings.append(numpy.concatenate((datapoint, self.embedding(word)), axis = 0))
+                tags.append(tag_number[tag])
 
-                # register the tag, assign a number if this is the first time we see it
-                target = tag_number[psent[i + b][1]]
+            rnd = random()
+            if rnd < 0.7:
+                [train_x.append(embedding) for embedding in embeddings]
+                [train_y.append(target) for target in tags]
+            elif rnd < 0.8:
+                [valid_x.append(embedding) for embedding in embeddings]
+                [valid_y.append(target) for target in tags]            
+            else:
+                [test_x.append(embedding) for embedding in embeddings]
+                [test_y.append(target) for target in tags]            
 
-                rnd = random()
-                if rnd < 0.7:
-                    train_x.append(datapoint)
-                    train_y.append(target)
-                elif rnd < 0.8:
-                    valid_x.append(datapoint)
-                    valid_y.append(target)
-                else:
-                    test_x.append(datapoint)
-                    test_y.append(target)
-
-        # TODO: move this inside LogisticRegression, and NeuralNetwork classes
+        # TODO: move this inside LogisticRegression, and MLP classes
         # generate symbolic variables for input (x and y represent a
         # minibatch)
         x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
@@ -74,7 +71,8 @@ class VectorTagger:
 
         # Construct the actual model class
         # Each vector of embeddings has 300 elements
-        classifier = LogisticRegression(dataset, x, n_in = 300 * (a + b + n), n_out = len(tag_number))
+        # TODO: instantiate this based on 'model' str
+        classifier = LogisticRegression(dataset, x, n_in = vec_len, n_out = len(tag_number), wsize = 3)
 
         # clean this stuff so GC is triggered
         dataset = None

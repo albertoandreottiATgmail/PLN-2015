@@ -47,6 +47,7 @@ import numpy
 
 import theano
 import theano.tensor as T
+from theano.tensor.signal.conv import conv2d
 
 
 class LogisticRegression(object):
@@ -58,7 +59,7 @@ class LogisticRegression(object):
     determine a class membership probability.
     """
 
-    def __init__(self, dataset, input, n_in, n_out):
+    def __init__(self, dataset, input, n_in, n_out, wsize = 1):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -73,14 +74,18 @@ class LogisticRegression(object):
         :param n_out: number of output units, the dimension of the space in
                       which the labels lie
 
+        :type wsize: int
+        :param n_out: context, before and after
+
         """
         self.dataset = dataset
+        self.wsize = wsize
 
         # start-snippet-1
-        # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
+        # initialize with 0 the weights W as a matrix of shape (n_in, wsize, n_out)
         self.W = theano.shared(
             value=numpy.zeros(
-                (n_in, n_out),
+                (n_out, wsize, n_in),
                 dtype=theano.config.floatX
             ),
             name='W',
@@ -104,7 +109,10 @@ class LogisticRegression(object):
         # x is a matrix where row-j  represents input training sample-j
         # b is a vector where element-k represent the free parameter of
         # hyperplane-k
-        self.p_y_given_x = T.nnet.softmax(T.dot(input, self.W) + self.b)
+        projections = conv2d(input, self.W)
+        #projections.shape.eval()
+        projections = theano.tensor.addbroadcast(projections, 2).squeeze().transpose()
+        self.p_y_given_x = T.nnet.softmax(projections + self.b)
 
         # symbolic description of how to compute prediction as class whose
         # probability is maximal
@@ -200,7 +208,7 @@ class LogisticRegression(object):
 
     def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=100,
                                datasets = None,
-                               batch_size = 600):
+                               batch_size = 700):
         """
         Demonstrate stochastic gradient descent optimization of a log-linear
         model
@@ -247,7 +255,7 @@ class LogisticRegression(object):
             outputs = self.errors(y),
             givens = {
                 x: test_set_x[index * batch_size: (index + 1) * batch_size],
-                y: test_set_y[index * batch_size: (index + 1) * batch_size]
+                y: test_set_y[index * batch_size + 1: (index + 1) * batch_size - 1]
             }
         )
 
@@ -256,7 +264,7 @@ class LogisticRegression(object):
             outputs= self.errors(y),
             givens={
                 x: valid_set_x[index * batch_size: (index + 1) * batch_size],
-                y: valid_set_y[index * batch_size: (index + 1) * batch_size]
+                y: valid_set_y[index * batch_size + 1: (index + 1) * batch_size - 1]
             }
         )
 
@@ -279,7 +287,7 @@ class LogisticRegression(object):
             updates=updates,
             givens={
                 x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size: (index + 1) * batch_size]
+                y: train_set_y[index * batch_size + 1: (index + 1) * batch_size -1]
             }
         )
         # end-snippet-3
