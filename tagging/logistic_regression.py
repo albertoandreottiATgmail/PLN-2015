@@ -75,7 +75,8 @@ class LogisticRegression(object):
                       which the labels lie
 
         :type wsize: int
-        :param n_out: context, before and after
+        :param n_out: context, size of the window, whose center is the vector
+                      we're trying to classify
 
         """
         self.dataset = dataset
@@ -83,6 +84,8 @@ class LogisticRegression(object):
 
         # start-snippet-1
         # initialize with 0 the weights W as a matrix of shape (n_in, wsize, n_out)
+        # add an extra dimension, wsize. W is divided wsize times and each chunk is located along that dimension.
+        # nothing changes from a mathematical point of view.
         self.W = theano.shared(
             value=numpy.zeros(
                 (n_out, wsize, n_in),
@@ -104,13 +107,10 @@ class LogisticRegression(object):
         # symbolic expression for computing the matrix of class-membership
         # probabilities
         # Where:
-        # W is a matrix where column-k represent the separation hyperplane for
-        # class-k
-        # x is a matrix where row-j  represents input training sample-j
-        # b is a vector where element-k represent the free parameter of
-        # hyperplane-k
+        # W is a tensor where sub-matrix k represent the separation hyperplane for class-k
+        # x is a matrix where rows each set of wsize consecutive rows represents an input training sample
+        # b is a vector where element-k represent the free parameter of hyperplane-k
         projections = conv2d(input, self.W)
-        #projections.shape.eval()
         projections = theano.tensor.addbroadcast(projections, 2).squeeze().transpose()
         self.p_y_given_x = T.nnet.softmax(projections + self.b)
 
@@ -208,7 +208,7 @@ class LogisticRegression(object):
 
     def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=100,
                                datasets = None,
-                               batch_size = 700):
+                               batch_size = 300):
         """
         Demonstrate stochastic gradient descent optimization of a log-linear
         model
