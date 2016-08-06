@@ -1,7 +1,7 @@
 """Train a sequence tagger.
 
 Usage:
-  train.py [-m <model>] -o <file>
+  train.py [-m <model>] -o <file> [-w 1:1]
   train.py -h | --help
 
 Options:
@@ -9,9 +9,11 @@ Options:
                   base, Baseline
                   hmm:n, MLHMM with order n.
                   memm:n MEMM with order n.
-
+  -w k:j        Define the window, k elements before, j after.
   -o <file>     Output model file.
+ 
   -h --help     Show this screen.
+
 """
 from docopt import docopt
 import pickle
@@ -21,6 +23,7 @@ from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
 from tagging.vector import VectorTagger
+from collections import namedtuple
 
 
 models = {
@@ -37,14 +40,19 @@ if __name__ == '__main__':
     sents = list(corpus.tagged_sents())
 
     # train the model
-    first_chunk = opts['-m'].split(':')[1]
     if opts['-m'].startswith('hmm') or opts['-m'].startswith('memm'):
         model = models[opts['-m'].split(':')[0]](int(first_chunk), sents)
     else:
-        model = models[opts['-m']](first_chunk, sents)
+        # one of {logreg, mlp}
+        sub_model = opts['-m'].split(':')[1]
+        window = namedtuple('before', 'after')
+        window.before = int(opts.get('w', '1:1').split(':')[0] )
+        window.after = int(opts.get('w', '1:1').split(':')[1])
+        model = models[opts['-m']](sub_model, sents, window)
 
     # save it
     filename = opts['-o']
     f = open(filename, 'wb')
     pickle.dump(model, f)
     f.close()
+

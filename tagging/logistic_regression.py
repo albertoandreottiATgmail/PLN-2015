@@ -59,7 +59,7 @@ class LogisticRegression(object):
     determine a class membership probability.
     """
 
-    def __init__(self, dataset, input, n_in, n_out, wsize = 1):
+    def __init__(self, dataset, n_in, n_out, window):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -80,12 +80,17 @@ class LogisticRegression(object):
 
         """
         self.dataset = dataset
-        self.wsize = wsize
+        self.wsize = wsize = window.before + 1 + window.after
+        self.window = window
 
-        # start-snippet-1
+        # generate symbolic variables for input (x and y represent a
+        # minibatch)
+        x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
+
         # initialize with 0 the weights W as a matrix of shape (n_in, wsize, n_out)
-        # add an extra dimension, wsize. W is divided wsize times and each chunk is located along that dimension.
-        # nothing changes from a mathematical point of view.
+        # Added an extra dimension, wsize. A vector in the old W is divided wsize times,
+        # and each chunk is located along that extra dimension.
+        # Nothing changes from a mathematical point of view, just a more convenient layout.
         self.W = theano.shared(
             value=numpy.zeros(
                 (n_out, wsize, n_in),
@@ -107,23 +112,22 @@ class LogisticRegression(object):
         # symbolic expression for computing the matrix of class-membership
         # probabilities
         # Where:
-        # W is a tensor where sub-matrix k represent the separation hyperplane for class-k
-        # x is a matrix where rows each set of wsize consecutive rows represents an input training sample
-        # b is a vector where element-k represent the free parameter of hyperplane-k
-        projections = conv2d(input, self.W)
+        # W is a tensor where sub-matrix k represent the separation hyperplane for class-k.
+        # x is a matrix, where each set of wsize consecutive rows represents an input training sample.
+        # b is a vector where element-k represent the free parameter of hyperplane-k.
+        projections = conv2d(x, self.W)
         projections = theano.tensor.addbroadcast(projections, 2).squeeze().transpose()
         self.p_y_given_x = T.nnet.softmax(projections + self.b)
 
         # symbolic description of how to compute prediction as class whose
         # probability is maximal
         self.y_pred = T.argmax(self.p_y_given_x, axis=1)
-        # end-snippet-1
 
         # parameters of the model
         self.params = [self.W, self.b]
 
         # keep track of model input
-        self.input = input
+        self.input = x
 
     def negative_log_likelihood(self, y):
         """Return the mean of the negative log-likelihood of the prediction
@@ -250,12 +254,13 @@ class LogisticRegression(object):
 
         # compiling a Theano function that computes the mistakes that are made by
         # the model on a minibatch
+        window = self.window
         test_model = theano.function(
             inputs = [index],
             outputs = self.errors(y),
             givens = {
                 x: test_set_x[index * batch_size: (index + 1) * batch_size],
-                y: test_set_y[index * batch_size + 1: (index + 1) * batch_size - 1]
+                y: test_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
             }
         )
 
@@ -264,7 +269,7 @@ class LogisticRegression(object):
             outputs= self.errors(y),
             givens={
                 x: valid_set_x[index * batch_size: (index + 1) * batch_size],
-                y: valid_set_y[index * batch_size + 1: (index + 1) * batch_size - 1]
+                y: valid_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
             }
         )
 
@@ -287,7 +292,7 @@ class LogisticRegression(object):
             updates=updates,
             givens={
                 x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size + 1: (index + 1) * batch_size -1]
+                y: train_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
             }
         )
         # end-snippet-3
@@ -297,10 +302,10 @@ class LogisticRegression(object):
         ###############
         print('... training the model')
         # early-stopping parameters
-        patience = 5000  # look as this many examples regardless
+        patience = 7000  # look as this many examples regardless
         patience_increase = 2  # wait this much longer when a new best is
                                # found
-        improvement_threshold = 0.995  # a relative improvement of this much is
+        improvement_threshold = 0.9995  # a relative improvement of this much is
                                        # considered significant
         validation_frequency = min(n_train_batches, patience // 2)
                                   # go through this many
@@ -364,8 +369,8 @@ class LogisticRegression(object):
                         )
 
                         # save the best model
-                        with open('best_model.pkl', 'wb') as f:
-                            pickle.dump(self, f)
+                        # with open('best_model.pkl', 'wb') as f:
+                        #    pickle.dump(self, f)
 
                 if patience <= iter:
                     done_looping = True
