@@ -2,11 +2,11 @@
 from collections import defaultdict
 from gensim import models
 from logistic_regression import LogisticRegression
-#from mlp import MLP
+from mlp import MLP
 from random import random
 from collections import defaultdict
-import theano.tensor as T
-import theano
+#import theano.tensor as T
+#import theano
 import numpy
 
 
@@ -23,7 +23,7 @@ class VectorTagger:
         """
         tagged_sents -- training sentences, each one being a list of pairs.
         """
-        vector_models = {'logreg': LogisticRegression, 'mlp': None}
+        vector_models = {'logreg': LogisticRegression, 'mlp': MLP}
         self.vec_len = vec_len = 300
         self.ending = numpy.ndarray(shape = (self.vec_len, ))
         self.ending.fill(0.9)
@@ -73,8 +73,12 @@ class VectorTagger:
 
         # Construct the actual model class
         # Each vector of embeddings has 300 elements
+
         classifier = vector_models[classifier](dataset, n_in = vec_len,
           n_out = len(tag_number), window = window)
+
+        # classifier = MLP(dataset, x, n_in=300 * (a + b + n), n_hidden=80, n_out=len(tag_number))
+
 
         # clean this stuff so GC is triggered
         dataset = None
