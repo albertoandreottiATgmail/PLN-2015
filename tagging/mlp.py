@@ -33,14 +33,15 @@ import numpy
 import theano
 import theano.tensor as T
 from data_access import DataAccess
-
+from theano.tensor.signal.conv import conv2d
+from util import Window
 
 from logistic_regression import LogisticRegression
 
 
 # start-snippet-1
 class HiddenLayer(object):
-    def __init__(self, dataset, input, n_in, n_out, W=None, b=None,
+    def __init__(self, x, n_in, n_out, wsize, W=None, b=None,
                  activation=T.tanh):
         """
         Typical hidden layer of a MLP: units are fully-connected and have
@@ -69,7 +70,6 @@ class HiddenLayer(object):
         # :param rng: a random number generator used to initialize weights
         self.rng = rng = numpy.random.RandomState(1234)
 
-        self.dataset = dataset
         self.input = input
         # end-snippet-1
 
@@ -90,7 +90,7 @@ class HiddenLayer(object):
                 rng.uniform(
                     low=-numpy.sqrt(6. / (n_in + n_out)),
                     high=numpy.sqrt(6. / (n_in + n_out)),
-                    size=(n_in, n_out)
+                    size=(n_out, wsize, n_in) # convolution trick
                 ),
                 dtype=theano.config.floatX
             )
@@ -106,14 +106,17 @@ class HiddenLayer(object):
         self.W = W
         self.b = b
 
-        lin_output = T.dot(input, self.W) + self.b
+        # relies on broadcasting 2D * 3D
+        projections = conv2d(x, self.W)
+        projections = theano.tensor.addbroadcast(projections, 2).squeeze().transpose()
+        lin_output = projections + self.b
+
         self.output = (
             lin_output if activation is None
             else activation(lin_output)
         )
         # parameters of the model
         self.params = [self.W, self.b]
-
 
 
 class MLP(DataAccess):
@@ -127,7 +130,7 @@ class MLP(DataAccess):
     class).
     """
 
-    def __init__(self, dataset, input, n_in, n_hidden, n_out):
+    def __init__(self, dataset, n_in, n_hidden, n_out, window):
         """Initialize the parameters for the multilayer perceptron
 
         :type input: theano.tensor.TensorType
@@ -146,6 +149,11 @@ class MLP(DataAccess):
         which the labels lie
 
         """
+        # generate symbolic variables for input (x and y represent a
+        # minibatch)
+        x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
+        # keep track of model input
+        self.input = x
 
         self.dataset = dataset
         # Since we are dealing with a one hidden layer MLP, this will translate
@@ -153,21 +161,21 @@ class MLP(DataAccess):
         # LogisticRegression layer; the activation function can be replaced by
         # sigmoid or any other nonlinear function
         self.hiddenLayer = HiddenLayer(
-            dataset,
-            input=input,
+            x=x,
             n_in=n_in,
             n_out=n_hidden,
+            wsize=window.before + 1 + window.after,
             activation=T.tanh
         )
 
         # The logistic regression layer gets as input the hidden units
         # of the hidden layer
-        self.logRegressionLayer = LogisticRegression(None,
-            input=self.hiddenLayer.output,
+        self.logRegressionLayer = LogisticRegression(x=self.hiddenLayer.output,
+            dataset = None,
             n_in=n_hidden,
             n_out=n_out
         )
-        # end-snippet-2 start-snippet-3
+
         # L1 norm ; one regularization option is to enforce L1 norm to
         # be small
         self.L1 = (
@@ -194,12 +202,10 @@ class MLP(DataAccess):
         # the parameters of the model are the parameters of the two layer it is
         # made out of
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
-        # end-snippet-3
+        self.window = window
 
-        # keep track of model input
-        self.input = input
 
-    def sgd_optimization_ancora(self, learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
+    def sgd_optimization_ancora(self, learning_rate=0.005, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
              dataset='mnist.pkl.gz', batch_size=20, n_hidden=500):
         """
         Demonstrate stochastic gradient descent optimization for a multilayer
@@ -276,7 +282,8 @@ class MLP(DataAccess):
             outputs=self.errors(y),
             givens={
                 x: test_set_x[index * batch_size:(index + 1) * batch_size],
-                y: test_set_y[index * batch_size:(index + 1) * batch_size]
+                y: test_set_y[index * batch_size + self.window.before:
+                (index + 1) * batch_size - self.window.after]
             }
         )
 
@@ -285,7 +292,8 @@ class MLP(DataAccess):
             outputs=self.errors(y),
             givens={
                 x: valid_set_x[index * batch_size:(index + 1) * batch_size],
-                y: valid_set_y[index * batch_size:(index + 1) * batch_size]
+                y: valid_set_y[index * batch_size + self.window.before:
+                (index + 1) * batch_size - self.window.after]
             }
         )
 
@@ -297,10 +305,6 @@ class MLP(DataAccess):
         # specify how to update the parameters of the model as a list of
         # (variable, update expression) pairs
 
-        # given two lists of the same length, A = [a1, a2, a3, a4] and
-        # B = [b1, b2, b3, b4], zip generates a list C of same size, where each
-        # element is a pair formed from the two lists :
-        #    C = [(a1, b1), (a2, b2), (a3, b3), (a4, b4)]
         updates = [
             (param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)
@@ -315,10 +319,10 @@ class MLP(DataAccess):
             updates=updates,
             givens={
                 x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size: (index + 1) * batch_size]
+                y: train_set_y[index * batch_size + self.window.before:
+                (index + 1) * batch_size - self.window.after]
             }
         )
-        # end-snippet-5
 
         ###############
         # TRAIN MODEL #

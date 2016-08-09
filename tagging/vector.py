@@ -1,12 +1,10 @@
-
+import pickle
 from collections import defaultdict
 from gensim import models
 from logistic_regression import LogisticRegression
 from mlp import MLP
 from random import random
 from collections import defaultdict
-#import theano.tensor as T
-#import theano
 import numpy
 
 
@@ -23,6 +21,7 @@ class VectorTagger:
         """
         tagged_sents -- training sentences, each one being a list of pairs.
         """
+        self.missing = dict()
         vector_models = {'logreg': LogisticRegression, 'mlp': MLP}
         self.vec_len = vec_len = 300
         self.ending = numpy.ndarray(shape = (self.vec_len, ))
@@ -30,58 +29,63 @@ class VectorTagger:
 
         self.start = numpy.ndarray(shape = (self.vec_len, ))
         self.start.fill(0.1)
-
-        # TODO: if a trained model is found, don't train
-        self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary = True)
-
+        self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary=True)
         self.window = window
 
         self.tag_count = 0
         train_x , test_x , valid_x = [], [], []
         train_y , test_y , valid_y = [], [], []
-        #keep track of the number of sentences
+        # keep track of the number of sentences
         train_cnt = valid_cnt = test_cnt = 0
 
         # dictionary tag -> number
         tag_number = defaultdict(self.inc)
 
-        # map to vectors
-        for sent in tagged_sents:
-            psent = [('<s>', '<s>')] * window.before + sent + [('</s>', '</s>')] * window.after
-            tags = []
-            embeddings = []
-            for word, tag in psent:
-                datapoint = numpy.empty([0])
-                embeddings.append(numpy.concatenate((datapoint, self.embedding(word)), axis = 0))
-                tags.append(tag_number[tag])
+        try:
+            print('loading dataset with embeddings from disk')
+            dataset = pickle.load(open('dataset.pkl', 'rb'))
+            (train_cnt, valid_cnt, test_cnt, tag_number_len) = dataset[3]
+        except FileNotFoundError:
+            # map to vectors
+            for sent in tagged_sents:
+                psent = [('<s>', '<s>')] * window.before + sent + [('</s>', '</s>')] * window.after
+                tags = []
+                embeddings = []
+                for word, tag in psent:
+                    datapoint = numpy.empty([0])
+                    embeddings.append(numpy.concatenate((datapoint, self.embedding(word, tag)), axis=0))
+                    tags.append(tag_number[tag])
 
-            rnd = random()
-            if rnd < 0.7:
-                [train_x.append(embedding) for embedding in embeddings]
-                [train_y.append(target) for target in tags]
-                train_cnt += 1
-            elif rnd < 0.8:
-                [valid_x.append(embedding) for embedding in embeddings]
-                [valid_y.append(target) for target in tags]
-                valid_cnt += 1
-            else:
-                [test_x.append(embedding) for embedding in embeddings]
-                [test_y.append(target) for target in tags]
-                test_cnt += 1
+                rnd = random()
+                if rnd < 0.7:
+                    [train_x.append(embedding) for embedding in embeddings]
+                    [train_y.append(target) for target in tags]
+                    train_cnt += 1
+                elif rnd < 0.8:
+                    [valid_x.append(embedding) for embedding in embeddings]
+                    [valid_y.append(target) for target in tags]
+                    valid_cnt += 1
+                else:
+                    [test_x.append(embedding) for embedding in embeddings]
+                    [test_y.append(target) for target in tags]
+                    test_cnt += 1
 
-        dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
+            tag_number_len = len(tag_number)
+            dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y), (train_cnt, valid_cnt, test_cnt, tag_number_len), self.missing]
+            # save the data
+            with open('dataset.pkl', 'wb') as f:
+                pickle.dump(dataset, f)
 
-        # Construct the actual model class
-        # Each vector of embeddings has 300 elements
+        print('Number of sentences in datasets train: %d, test: %d, validation: %d' % (train_cnt, valid_cnt, test_cnt))
 
-        classifier = vector_models[classifier](dataset, n_in = vec_len,
-          n_out = len(tag_number), window = window)
+        # Construct the actual model class, each vector of embeddings has 300 elements
+        # TODO: if a trained model is found, don't train
+        # classifier = vector_models[classifier](dataset, n_in = vec_len,
+        #  n_out = len(tag_number), window = window)
 
-        # classifier = MLP(dataset, x, n_in=300 * (a + b + n), n_hidden=80, n_out=len(tag_number))
-
+        classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=tag_number_len, window=window)
 
         # clean this stuff so GC is triggered
-        dataset = None
         self.model = None
         classifier.sgd_optimization_ancora()
 
@@ -92,7 +96,7 @@ class VectorTagger:
         """
         return [self.tag_word(w) for w in sent]
 
-    def embedding(self, word):
+    def embedding(self, word, tag):
         if word == '<s>':
             return self.start
         if word == '</s>':
@@ -101,7 +105,10 @@ class VectorTagger:
             embedding = self.model[word]
             return embedding
         else:
-            return [0.5] * self.vec_len
+            # handle unknown
+            if word not in self.missing:
+                self.missing[word] = [random() for a in range(300)]
+            return self.missing[word]
 
     def tag_word(self, w):
         """Tag a word.

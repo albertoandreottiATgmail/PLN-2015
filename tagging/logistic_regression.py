@@ -49,6 +49,7 @@ import theano
 import theano.tensor as T
 from theano.tensor.signal.conv import conv2d
 from data_access import DataAccess
+from util import Window
 
 
 class LogisticRegression(DataAccess):
@@ -60,7 +61,7 @@ class LogisticRegression(DataAccess):
     determine a class membership probability.
     """
 
-    def __init__(self, dataset, n_in, n_out, window):
+    def __init__(self, x, dataset, n_in, n_out, window=Window(0,0)):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -86,7 +87,10 @@ class LogisticRegression(DataAccess):
 
         # generate symbolic variables for input (x and y represent a
         # minibatch)
-        x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
+        if x == None:
+            x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
+        # keep track of model input
+        self.input = x
 
         # initialize with 0 the weights W as a matrix of shape (n_in, wsize, n_out)
         # Added an extra dimension, wsize. A vector in the old W is divided wsize times,
@@ -127,8 +131,6 @@ class LogisticRegression(DataAccess):
         # parameters of the model
         self.params = [self.W, self.b]
 
-        # keep track of model input
-        self.input = x
 
     def negative_log_likelihood(self, y):
         """Return the mean of the negative log-likelihood of the prediction
@@ -251,8 +253,8 @@ class LogisticRegression(DataAccess):
         )
 
         # compute the gradient of cost with respect to theta = (W,b)
-        g_W = T.grad(cost=cost, wrt = self.W)
-        g_b = T.grad(cost=cost, wrt= self.b)
+        g_W = T.grad(cost=cost, wrt=self.W)
+        g_b = T.grad(cost=cost, wrt=self.b)
 
         # start-snippet-3
         # specify how to update the parameters of the model as a list of
@@ -283,7 +285,7 @@ class LogisticRegression(DataAccess):
         patience_increase = 2  # wait this much longer when a new best is
                                # found
         improvement_threshold = 0.9995  # a relative improvement of this much is
-                                       # considered significant
+                                        # considered significant
         validation_frequency = min(n_train_batches, patience // 2)
                                   # go through this many
                                   # minibatche before checking the network
@@ -321,7 +323,7 @@ class LogisticRegression(DataAccess):
 
                     # if we got the best validation score until now
                     if this_validation_loss < best_validation_loss:
-                        #improve patience if loss improvement is good enough
+                        # improve patience if loss improvement is good enough
                         if this_validation_loss < best_validation_loss *  \
                            improvement_threshold:
                             patience = max(patience, iter * patience_increase)
@@ -354,21 +356,16 @@ class LogisticRegression(DataAccess):
                     break
 
         end_time = timeit.default_timer()
-        print(
-            (
-                'Optimization complete with best validation score of %f %%,'
-                'with test performance %f %%'
-            )
-            % (best_validation_loss * 100., test_score * 100.)
-        )
+        print(('Optimization complete with best validation score of %f %%,'
+              'with test performance %f %%')
+              % (best_validation_loss * 100., test_score * 100.))
 
         print('The code run for %d epochs, with %f epochs/sec' % (
             epoch, 1. * epoch / (end_time - start_time)))
 
         print(('The code for file ' +
                os.path.split(__file__)[1] +
-               ' ran for %.1fs' % ((end_time - start_time))), file=sys.stderr)
-
+               ' ran for %.1fs' % (end_time - start_time)), file=sys.stderr)
 
     def predict(self):
         """

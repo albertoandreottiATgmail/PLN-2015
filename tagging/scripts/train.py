@@ -23,8 +23,8 @@ from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
 from tagging.vector import VectorTagger
+from util import Window
 from collections import namedtuple
-
 
 models = {
     'base': BaselineTagger, 'hmm': MLHMM, 'memm': MEMM, 'vector:logreg': VectorTagger, 'vector:mlp': VectorTagger
