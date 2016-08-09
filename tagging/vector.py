@@ -41,40 +41,37 @@ class VectorTagger:
         # dictionary tag -> number
         tag_number = defaultdict(self.inc)
 
-        try:
-            print('loading dataset with embeddings from disk')
-            dataset = pickle.load(open('dataset.pkl', 'rb'))
-            (train_cnt, valid_cnt, test_cnt, tag_number_len) = dataset[3]
-        except FileNotFoundError:
-            # map to vectors
-            for sent in tagged_sents:
-                psent = [('<s>', '<s>')] * window.before + sent + [('</s>', '</s>')] * window.after
-                tags = []
-                embeddings = []
-                for word, tag in psent:
-                    datapoint = numpy.empty([0])
-                    embeddings.append(numpy.concatenate((datapoint, self.embedding(word, tag)), axis=0))
-                    tags.append(tag_number[tag])
+        shuffle = self.load_shuffle(len(tagged_sents))
 
-                rnd = random()
-                if rnd < 0.7:
-                    [train_x.append(embedding) for embedding in embeddings]
-                    [train_y.append(target) for target in tags]
-                    train_cnt += 1
-                elif rnd < 0.8:
-                    [valid_x.append(embedding) for embedding in embeddings]
-                    [valid_y.append(target) for target in tags]
-                    valid_cnt += 1
-                else:
-                    [test_x.append(embedding) for embedding in embeddings]
-                    [test_y.append(target) for target in tags]
-                    test_cnt += 1
+        # map to vectors
+        for i, sent in enumerate(tagged_sents):
+            psent = [('<s>', '<s>')] * window.before + sent + [('</s>', '</s>')] * window.after
+            tags = []
+            embeddings = []
+            for word, tag in psent:
+                datapoint = numpy.empty([0])
+                embeddings.append(numpy.concatenate((datapoint, self.embedding(word, tag)), axis=0))
+                tags.append(tag_number[tag])
 
-            tag_number_len = len(tag_number)
-            dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y), (train_cnt, valid_cnt, test_cnt, tag_number_len), self.missing]
-            # save the data
-            with open('dataset.pkl', 'wb') as f:
-                pickle.dump(dataset, f)
+            rnd = shuffle[i]
+            if rnd < 0.7:
+                [train_x.append(embedding) for embedding in embeddings]
+                [train_y.append(target) for target in tags]
+                train_cnt += 1
+            elif rnd < 0.8:
+                [valid_x.append(embedding) for embedding in embeddings]
+                [valid_y.append(target) for target in tags]
+                valid_cnt += 1
+            else:
+                [test_x.append(embedding) for embedding in embeddings]
+                [test_y.append(target) for target in tags]
+                test_cnt += 1
+
+        dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
+
+        # save the data
+        with open('dataset.pkl', 'wb') as f:
+            pickle.dump(dataset, f)
 
         print('Number of sentences in datasets train: %d, test: %d, validation: %d' % (train_cnt, valid_cnt, test_cnt))
 
@@ -83,7 +80,7 @@ class VectorTagger:
         # classifier = vector_models[classifier](dataset, n_in = vec_len,
         #  n_out = len(tag_number), window = window)
 
-        classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=tag_number_len, window=window)
+        classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=len(tag_number), window=window)
 
         # clean this stuff so GC is triggered
         self.model = None
@@ -126,5 +123,18 @@ class VectorTagger:
         w -- the word.
         """
         return w not in self.counts
+
+    def load_shuffle(self, nsent):
+        try:
+            return pickle.load(open('shuffle.pkl', 'rb'))
+        except:
+            shuffle = [random() for _ in range(nsent)]
+            with open('shuffle.pkl', 'wb') as f:
+                pickle.dump(shuffle, f)
+            print('saved shuffle len: %d' % nsent)
+
+            return shuffle
+
+
 
 
