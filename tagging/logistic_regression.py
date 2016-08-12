@@ -61,7 +61,7 @@ class LogisticRegression(DataAccess):
     determine a class membership probability.
     """
 
-    def __init__(self, x, dataset, n_in, n_out, window=Window(0,0)):
+    def __init__(self, dataset, n_in, n_out, window=Window(0,0), x=None):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -81,13 +81,15 @@ class LogisticRegression(DataAccess):
                       we're trying to classify
 
         """
+
+        print ('window size: %d:%d' % (window.before, window.after))
         self.dataset = dataset
         self.wsize = wsize = window.before + 1 + window.after
         self.window = window
 
         # generate symbolic variables for input (x and y represent a
         # minibatch)
-        if x == None:
+        if x is None:
             x = T.matrix('x')  # data, each vector of matrix is an embedding for a word.
         # keep track of model input
         self.input = x
@@ -150,7 +152,7 @@ class LogisticRegression(DataAccess):
         Note: we use the mean instead of the sum so that
               the learning rate is less dependent on the batch size
         """
-        # start-snippet-2
+
         # y.shape[0] is (symbolically) the number of rows in y, i.e.,
         # number of examples (call it n) in the minibatch
         # T.arange(y.shape[0]) is a symbolic vector which will contain
@@ -162,7 +164,6 @@ class LogisticRegression(DataAccess):
         # the mean (across minibatch examples) of the elements in v,
         # i.e., the mean log-likelihood across the minibatch.
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
-        # end-snippet-2
 
     def errors(self, y):
         """Return a float representing the number of errors in the minibatch
@@ -188,56 +189,49 @@ class LogisticRegression(DataAccess):
         else:
             raise NotImplementedError()
 
-
-    def sgd_optimization_ancora(self, learning_rate = 0.13, n_epochs=100,
-                               datasets = None,
-                               batch_size = 300):
+    def sgd_optimization_ancora(self, learning_rate=0.13, n_epochs=25,
+                                batch_size=300):
         """
-        Demonstrate stochastic gradient descent optimization of a log-linear
-        model
-
-        This is demonstrated on MNIST.
+        Stochastic gradient descent optimization of the log-linear model
 
         :type learning_rate: float
         :param learning_rate: learning rate used (factor for the stochastic
                               gradient)
-
         :type n_epochs: int
         :param n_epochs: maximal number of epochs to run the optimizer
 
+        :type batch_size: int
+        :param batch_size: size of dataset over which average is taken
+
         """
+
         train_set_x, train_set_y = self.shared_dataset(self.dataset[0])
         valid_set_x, valid_set_y = self.shared_dataset(self.dataset[1])
         test_set_x, test_set_y = self.shared_dataset(self.dataset[2])
         self.dataset = None
 
-        # compute number of minibatches for training, validation and testing
-        n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
-        n_valid_batches = valid_set_x.get_value(borrow=True).shape[0] // batch_size
-        n_test_batches = test_set_x.get_value(borrow=True).shape[0] // batch_size
+        # compute number of mini-batches for training, validation and testing
+        n_train_batches = train_set_y.shape.eval()[0] // batch_size
+        n_valid_batches = valid_set_y.shape.eval()[0] // batch_size
+        n_test_batches = test_set_y.shape.eval()[0] // batch_size
 
-        ######################
-        # BUILD ACTUAL MODEL #
-        ######################
         print('... building the model')
 
         # allocate symbolic variables for the data
         index = T.lscalar()  # index to a [mini]batch
-        x = self.input #T.matrix('x')  # data, presented as rasterized images
-        y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
+        x = self.input
+        y = T.ivector('y')   # labels, presented as 1D vector of [int] labels
 
-        # classifier -> self
-        # the cost we minimize during training is the negative log likelihood of
-        # the model in symbolic format
+        # the cost we minimize during training is the negative log likelihood of the model
         cost = self.negative_log_likelihood(y)
-
-        # compiling a Theano function that computes the mistakes that are made by
-        # the model on a minibatch
         window = self.window
+
+        # compiling a Theano function that computes the
+        # mistakes that are made by the model on a minibatch
         test_model = theano.function(
-            inputs = [index],
-            outputs = self.errors(y),
-            givens = {
+            inputs=[index],
+            outputs=self.errors(y),
+            givens={
                 x: test_set_x[index * batch_size: (index + 1) * batch_size],
                 y: test_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
             }
@@ -245,7 +239,7 @@ class LogisticRegression(DataAccess):
 
         validate_model = theano.function(
             inputs=[index],
-            outputs= self.errors(y),
+            outputs=self.errors(y),
             givens={
                 x: valid_set_x[index * batch_size: (index + 1) * batch_size],
                 y: valid_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
@@ -256,7 +250,6 @@ class LogisticRegression(DataAccess):
         g_W = T.grad(cost=cost, wrt=self.W)
         g_b = T.grad(cost=cost, wrt=self.b)
 
-        # start-snippet-3
         # specify how to update the parameters of the model as a list of
         # (variable, update expression) pairs.
         updates = [(self.W, self.W - learning_rate * g_W),
@@ -274,7 +267,6 @@ class LogisticRegression(DataAccess):
                 y: train_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
             }
         )
-        # end-snippet-3
 
         ###############
         # TRAIN MODEL #
@@ -295,31 +287,29 @@ class LogisticRegression(DataAccess):
         best_validation_loss = numpy.inf
         test_score = 0.
         start_time = timeit.default_timer()
+        valid_losses = []
 
         done_looping = False
         epoch = 0
         while (epoch < n_epochs) and (not done_looping):
-            epoch = epoch + 1
+            epoch += 1
             for minibatch_index in range(n_train_batches):
                 minibatch_avg_cost = train_model(minibatch_index)
-                # iteration number
+                # iteration number(in number of batches)
                 iter = (epoch - 1) * n_train_batches + minibatch_index
                 if (iter + 1) % validation_frequency == 0:
                     # compute zero-one loss on validation set
                     validation_losses = [validate_model(i)
                                          for i in range(n_valid_batches)]
                     this_validation_loss = numpy.mean(validation_losses)
+                    valid_losses.append(this_validation_loss)
                     print('validation loss: ' + str(this_validation_loss))
 
-                    print(
-                        'epoch %i, minibatch %i/%i, validation error %f %%' %
-                        (
-                            epoch,
-                            minibatch_index + 1,
-                            n_train_batches,
-                            this_validation_loss * 100.
-                        )
-                    )
+                    print('epoch %i, minibatch %i/%i, validation error %f %%' %
+                        (epoch,
+                         minibatch_index + 1,
+                         n_train_batches,
+                         this_validation_loss * 100.))
 
                     # if we got the best validation score until now
                     if this_validation_loss < best_validation_loss:
@@ -329,31 +319,39 @@ class LogisticRegression(DataAccess):
                             patience = max(patience, iter * patience_increase)
 
                         best_validation_loss = this_validation_loss
-                        # test it on the test set
 
+                        # test it on the test set
                         test_losses = [test_model(i)
                                        for i in range(n_test_batches)]
                         test_score = numpy.mean(test_losses)
 
-                        print(
-                            (
-                                '     epoch %i, minibatch %i/%i, test error of'
-                                ' best model %f %%'
-                            ) %
-                            (   epoch,
-                                minibatch_index + 1,
-                                n_train_batches,
-                                test_score * 100.
-                            )
-                        )
+                        print((' epoch %i, minibatch %i/%i, test error of'
+                               ' best model %f %%') %
+                              (epoch,
+                               minibatch_index + 1,
+                               n_train_batches,
+                               test_score * 100.))
 
                         # save the best model
                         # with open('best_model.pkl', 'wb') as f:
                         #    pickle.dump(self, f)
 
+                """ Validation Set: this data set is used to minimize overfitting.
+                You're not adjusting the weights of the network with this data set,
+                you're just verifying that any increase in accuracy over the training
+                data set actually yields an increase in accuracy over a data set that
+                has not been shown to the network before, or at least the network hasn't
+                trained on it (i.e. validation data set). If the accuracy over the
+                training data set increases, but the accuracy over then validation data
+                set stays the same or decreases, then you're overfitting your neural network
+                and you should stop training."""
+
                 if patience <= iter:
                     done_looping = True
                     break
+        # save the best model
+        with open('losses.pkl', 'wb') as f:
+            pickle.dump(valid_losses, f)
 
         end_time = timeit.default_timer()
         print(('Optimization complete with best validation score of %f %%,'

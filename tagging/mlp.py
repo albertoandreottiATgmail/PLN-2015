@@ -130,7 +130,7 @@ class MLP(DataAccess):
     class).
     """
 
-    def __init__(self, dataset, n_in, n_hidden, n_out, window):
+    def __init__(self, dataset, n_in, n_out, window, n_hidden=120):
         """Initialize the parameters for the multilayer perceptron
 
         :type input: theano.tensor.TensorType

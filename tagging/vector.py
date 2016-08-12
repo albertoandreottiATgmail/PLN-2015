@@ -42,6 +42,7 @@ class VectorTagger:
         tag_number = defaultdict(self.inc)
 
         shuffle = self.load_shuffle(len(tagged_sents))
+        self.load_missing()
 
         # map to vectors
         for i, sent in enumerate(tagged_sents):
@@ -69,18 +70,18 @@ class VectorTagger:
 
         dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
 
-        # save the data
-        with open('dataset.pkl', 'wb') as f:
-            pickle.dump(dataset, f)
+        # save missing words
+        with open('missing.pkl', 'wb') as f:
+            pickle.dump(self.missing, f)
 
         print('Number of sentences in datasets train: %d, test: %d, validation: %d' % (train_cnt, valid_cnt, test_cnt))
 
         # Construct the actual model class, each vector of embeddings has 300 elements
         # TODO: if a trained model is found, don't train
-        # classifier = vector_models[classifier](dataset, n_in = vec_len,
-        #  n_out = len(tag_number), window = window)
+        classifier = vector_models[classifier](dataset, n_in=vec_len,
+          n_out=len(tag_number), window=window)
 
-        classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=len(tag_number), window=window)
+        # classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=len(tag_number), window=window)
 
         # clean this stuff so GC is triggered
         self.model = None
@@ -102,10 +103,17 @@ class VectorTagger:
             embedding = self.model[word]
             return embedding
         else:
-            # handle unknown
+            # handle unknown - three ways of doing this
             if word not in self.missing:
                 self.missing[word] = [random() for a in range(300)]
+
+            #if tag not in self.missing:
+            #    self.missing[tag] = [random() for a in range(300)]
+            #    self.missing[word] = self.missing[tag]
+            #if word not in self.missing:
+            #    self.missing[word] = self.missing[tag]
             return self.missing[word]
+
 
     def tag_word(self, w):
         """Tag a word.
@@ -135,6 +143,12 @@ class VectorTagger:
 
             return shuffle
 
+    def load_missing(self):
+        try:
+            self.missing = pickle.load(open('missing.pkl', 'rb'))
+            print('loaded %d missing words' % len(self.missing))
+        except:
+            pass
 
 
 

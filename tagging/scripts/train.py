@@ -46,8 +46,8 @@ if __name__ == '__main__':
         # one of {logreg, mlp}
         sub_model = opts['-m'].split(':')[1]
         window = namedtuple('before', 'after')
-        window.before = int(opts.get('w', '1:1').split(':')[0] )
-        window.after = int(opts.get('w', '1:1').split(':')[1])
+        window.before = int(opts.get('-w', '1:1').split(':')[0] )
+        window.after = int(opts.get('-w', '1:1').split(':')[1])
         model = models[opts['-m']](sub_model, sents, window)
 
     # save it
