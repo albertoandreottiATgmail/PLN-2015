@@ -189,7 +189,7 @@ class LogisticRegression(DataAccess):
         else:
             raise NotImplementedError()
 
-    def sgd_optimization_ancora(self, learning_rate=0.13, n_epochs=25,
+    def sgd_optimization_ancora(self, learning_rate=0.22, n_epochs=250,
                                 batch_size=300):
         """
         Stochastic gradient descent optimization of the log-linear model
@@ -232,8 +232,8 @@ class LogisticRegression(DataAccess):
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: test_set_x[index * batch_size: (index + 1) * batch_size],
-                y: test_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
+                x: test_set_x[index * batch_size: (index + 1) * batch_size + window.after + window.before],
+                y: test_set_y[index * batch_size: (index + 1) * batch_size]
             }
         )
 
@@ -241,8 +241,8 @@ class LogisticRegression(DataAccess):
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: valid_set_x[index * batch_size: (index + 1) * batch_size],
-                y: valid_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
+                x: valid_set_x[index * batch_size: (index + 1) * batch_size + window.after + window.before],
+                y: valid_set_y[index * batch_size: (index + 1) * batch_size]
             }
         )
 
@@ -263,8 +263,8 @@ class LogisticRegression(DataAccess):
             outputs=cost,
             updates=updates,
             givens={
-                x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size + window.before: (index + 1) * batch_size - window.after]
+                x: train_set_x[index * batch_size: (index + 1) * batch_size + window.after + window.before],
+                y: train_set_y[index * batch_size: (index + 1) * batch_size]
             }
         )
 
@@ -273,10 +273,10 @@ class LogisticRegression(DataAccess):
         ###############
         print('... training the model')
         # early-stopping parameters
-        patience = 7000  # look as this many examples regardless
+        patience = 5000  # look as this many examples regardless
         patience_increase = 2  # wait this much longer when a new best is
                                # found
-        improvement_threshold = 0.9995  # a relative improvement of this much is
+        improvement_threshold = 0.995   # a relative improvement of this much is
                                         # considered significant
         validation_frequency = min(n_train_batches, patience // 2)
                                   # go through this many
@@ -349,7 +349,7 @@ class LogisticRegression(DataAccess):
                 if patience <= iter:
                     done_looping = True
                     break
-        # save the best model
+        # save validation losses
         with open('losses.pkl', 'wb') as f:
             pickle.dump(valid_losses, f)
 

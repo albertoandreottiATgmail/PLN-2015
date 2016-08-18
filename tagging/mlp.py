@@ -35,6 +35,7 @@ import theano.tensor as T
 from data_access import DataAccess
 from theano.tensor.signal.conv import conv2d
 from util import Window
+import six.moves.cPickle as pickle
 
 from logistic_regression import LogisticRegression
 
@@ -205,8 +206,8 @@ class MLP(DataAccess):
         self.window = window
 
 
-    def sgd_optimization_ancora(self, learning_rate=0.005, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
-             dataset='mnist.pkl.gz', batch_size=20, n_hidden=500):
+    def sgd_optimization_ancora(self, learning_rate=0.005, L1_reg=0.00, L2_reg=0.0001, n_epochs=200,
+             dataset='mnist.pkl.gz', batch_size=100, n_hidden=120):
         """
         Demonstrate stochastic gradient descent optimization for a multilayer
         perceptron
@@ -241,9 +242,9 @@ class MLP(DataAccess):
         self.dataset = None
 
         # compute number of minibatches for training, validation and testing
-        n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
-        n_valid_batches = valid_set_x.get_value(borrow=True).shape[0] // batch_size
-        n_test_batches = test_set_x.get_value(borrow=True).shape[0] // batch_size
+        n_train_batches = train_set_y.shape.eval()[0] // batch_size
+        n_valid_batches = valid_set_y.shape.eval()[0] // batch_size
+        n_test_batches = test_set_y.shape.eval()[0] // batch_size
 
         ######################
         # BUILD ACTUAL MODEL #
@@ -256,15 +257,6 @@ class MLP(DataAccess):
         y = T.ivector('y')  # the labels are presented as 1D vector of
                             # [int] labels
 
-        # construct the MLP class
-        # classifier = MLP(
-        #    input=x,
-        #    n_in=28 * 28,
-        #    n_hidden=n_hidden,
-        #    n_out=10
-        #)
-
-        # start-snippet-4
         # the cost we minimize during training is the negative log likelihood of
         # the model plus the regularization terms (L1 and L2); cost is expressed
         # here symbolically
@@ -273,17 +265,16 @@ class MLP(DataAccess):
             + L1_reg * self.L1
             + L2_reg * self.L2_sqr
         )
-        # end-snippet-4
 
         # compiling a Theano function that computes the mistakes that are made
         # by the model on a minibatch
+        window = self.window
         test_model = theano.function(
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: test_set_x[index * batch_size:(index + 1) * batch_size],
-                y: test_set_y[index * batch_size + self.window.before:
-                (index + 1) * batch_size - self.window.after]
+                x: test_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
+                y: test_set_y[index * batch_size:(index + 1) * batch_size]
             }
         )
 
@@ -291,9 +282,8 @@ class MLP(DataAccess):
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: valid_set_x[index * batch_size:(index + 1) * batch_size],
-                y: valid_set_y[index * batch_size + self.window.before:
-                (index + 1) * batch_size - self.window.after]
+                x: valid_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
+                y: valid_set_y[index * batch_size:(index + 1) * batch_size]
             }
         )
 
@@ -318,9 +308,8 @@ class MLP(DataAccess):
             outputs=cost,
             updates=updates,
             givens={
-                x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size + self.window.before:
-                (index + 1) * batch_size - self.window.after]
+                x: train_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
+                y: train_set_y[index * batch_size:(index + 1) * batch_size]
             }
         )
 
@@ -349,6 +338,7 @@ class MLP(DataAccess):
 
         epoch = 0
         done_looping = False
+        valid_losses = []
 
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
@@ -362,6 +352,7 @@ class MLP(DataAccess):
                     validation_losses = [validate_model(i) for i
                                          in range(n_valid_batches)]
                     this_validation_loss = numpy.mean(validation_losses)
+                    valid_losses.append(this_validation_loss)
 
                     print(
                         'epoch %i, minibatch %i/%i, validation error %f %%' %
@@ -398,9 +389,15 @@ class MLP(DataAccess):
                     break
 
         end_time = timeit.default_timer()
+
+        # save validation losses
+        with open('losses.pkl', 'wb') as f:
+            pickle.dump(valid_losses, f)
+
         print(('Optimization complete. Best validation score of %f %% '
                'obtained at iteration %i, with test performance %f %%') %
               (best_validation_loss * 100., best_iter + 1, test_score * 100.))
         print(('The code for file ' +
                os.path.split(__file__)[1] +
                ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
+

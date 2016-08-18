@@ -8,6 +8,12 @@ from collections import defaultdict
 import numpy
 
 
+import os
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['GOTO_NUM_THREADS'] = '4'
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
+
 # handles the vector representation of words
 class VectorTagger:
 
@@ -45,11 +51,14 @@ class VectorTagger:
         self.load_missing()
 
         # map to vectors
+        [train_x.append(padding) for padding in [self.start] * window.before]
+        [test_x.append(padding) for padding in [self.start] * window.before]
+        [valid_x.append(padding) for padding in [self.start] * window.before]
+
         for i, sent in enumerate(tagged_sents):
-            psent = [('<s>', '<s>')] * window.before + sent + [('</s>', '</s>')] * window.after
             tags = []
             embeddings = []
-            for word, tag in psent:
+            for word, tag in sent:
                 datapoint = numpy.empty([0])
                 embeddings.append(numpy.concatenate((datapoint, self.embedding(word, tag)), axis=0))
                 tags.append(tag_number[tag])
@@ -67,6 +76,10 @@ class VectorTagger:
                 [test_x.append(embedding) for embedding in embeddings]
                 [test_y.append(target) for target in tags]
                 test_cnt += 1
+
+        [train_x.append(padding) for padding in [self.ending] * window.after]
+        [test_x.append(padding) for padding in [self.ending] * window.after]
+        [valid_x.append(padding) for padding in [self.ending] * window.after]
 
         dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
 
