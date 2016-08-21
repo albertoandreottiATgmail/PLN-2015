@@ -131,7 +131,7 @@ class MLP(DataAccess):
     class).
     """
 
-    def __init__(self, dataset, n_in, n_out, window, n_hidden=120):
+    def __init__(self, dataset, n_in, n_out, window, n_hidden=960):
         """Initialize the parameters for the multilayer perceptron
 
         :type input: theano.tensor.TensorType
@@ -203,11 +203,11 @@ class MLP(DataAccess):
         # the parameters of the model are the parameters of the two layer it is
         # made out of
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
-        self.window = window
+        self.before, self.after = window.before, window.after
 
 
     def sgd_optimization_ancora(self, learning_rate=0.005, L1_reg=0.00, L2_reg=0.0001, n_epochs=200,
-             dataset='mnist.pkl.gz', batch_size=100, n_hidden=120):
+             dataset='mnist.pkl.gz', batch_size=100, n_hidden=480):
         """
         Demonstrate stochastic gradient descent optimization for a multilayer
         perceptron
@@ -268,12 +268,11 @@ class MLP(DataAccess):
 
         # compiling a Theano function that computes the mistakes that are made
         # by the model on a minibatch
-        window = self.window
         test_model = theano.function(
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: test_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
+                x: test_set_x[index * batch_size:(index + 1) * batch_size + self.after + self.before],
                 y: test_set_y[index * batch_size:(index + 1) * batch_size]
             }
         )
@@ -282,7 +281,7 @@ class MLP(DataAccess):
             inputs=[index],
             outputs=self.errors(y),
             givens={
-                x: valid_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
+                x: valid_set_x[index * batch_size:(index + 1) * batch_size + self.after + self.before],
                 y: valid_set_y[index * batch_size:(index + 1) * batch_size]
             }
         )
@@ -291,12 +290,14 @@ class MLP(DataAccess):
         # compute the gradient of cost with respect to theta (sorted in params)
         # the resulting gradients will be stored in a list gparams
         gparams = [T.grad(cost, param) for param in self.params]
+        alpha = T.dscalar('alpha')
+        ep = T.dscalar('ep')
 
         # specify how to update the parameters of the model as a list of
         # (variable, update expression) pairs
-
+        self.learning_rate = learning_rate
         updates = [
-            (param, param - learning_rate * gparam)
+            (param, param - alpha * gparam)
             for param, gparam in zip(self.params, gparams)
         ]
 
@@ -304,12 +305,13 @@ class MLP(DataAccess):
         # in the same time updates the parameter of the model based on the rules
         # defined in `updates`
         train_model = theano.function(
-            inputs=[index],
+            inputs=[index, ep],
             outputs=cost,
             updates=updates,
             givens={
-                x: train_set_x[index * batch_size:(index + 1) * batch_size + window.after + window.before],
-                y: train_set_y[index * batch_size:(index + 1) * batch_size]
+                x: train_set_x[index * batch_size:(index + 1) * batch_size + self.after + self.before],
+                y: train_set_y[index * batch_size:(index + 1) * batch_size],
+                alpha: 0.005 + .1 / ep
             }
         )
 
@@ -343,7 +345,7 @@ class MLP(DataAccess):
         while (epoch < n_epochs) and (not done_looping):
             epoch = epoch + 1
             for minibatch_index in range(n_train_batches):
-                minibatch_avg_cost = train_model(minibatch_index)
+                minibatch_avg_cost = train_model(minibatch_index, epoch)
                 # iteration number
                 iter = (epoch - 1) * n_train_batches + minibatch_index
 

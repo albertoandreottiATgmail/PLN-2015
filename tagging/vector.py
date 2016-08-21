@@ -36,7 +36,9 @@ class VectorTagger:
         self.start = numpy.ndarray(shape = (self.vec_len, ))
         self.start.fill(0.1)
         self.model = model = models.Word2Vec.load_word2vec_format('/home/jose/Downloads/sbw_vectors.bin', binary=True)
-        self.window = window
+
+        # can't pickle the window tuple so we store it's members
+        self.before, self.after = window.before, window.after
 
         self.tag_count = 0
         train_x , test_x , valid_x = [], [], []
@@ -51,9 +53,9 @@ class VectorTagger:
         self.load_missing()
 
         # map to vectors
-        [train_x.append(padding) for padding in [self.start] * window.before]
-        [test_x.append(padding) for padding in [self.start] * window.before]
-        [valid_x.append(padding) for padding in [self.start] * window.before]
+        [train_x.append(padding) for padding in [self.start] * self.before]
+        [test_x.append(padding) for padding in [self.start] * self.before]
+        [valid_x.append(padding) for padding in [self.start] * self.before]
 
         for i, sent in enumerate(tagged_sents):
             tags = []
@@ -77,15 +79,15 @@ class VectorTagger:
                 [test_y.append(target) for target in tags]
                 test_cnt += 1
 
-        [train_x.append(padding) for padding in [self.ending] * window.after]
-        [test_x.append(padding) for padding in [self.ending] * window.after]
-        [valid_x.append(padding) for padding in [self.ending] * window.after]
+        [train_x.append(padding) for padding in [self.ending] * self.after]
+        [test_x.append(padding) for padding in [self.ending] * self.after]
+        [valid_x.append(padding) for padding in [self.ending] * self.after]
 
         dataset = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
 
         # save missing words
-        with open('missing.pkl', 'wb') as f:
-            pickle.dump(self.missing, f)
+        # with open('missing.pkl', 'wb') as f:
+        #    pickle.dump(self.missing, f)
 
         print('Number of sentences in datasets train: %d, test: %d, validation: %d' % (train_cnt, valid_cnt, test_cnt))
 
@@ -93,8 +95,6 @@ class VectorTagger:
         # TODO: if a trained model is found, don't train
         classifier = vector_models[classifier](dataset, n_in=vec_len,
           n_out=len(tag_number), window=window)
-
-        # classifier = MLP(dataset[0:3], n_in=300, n_hidden=120, n_out=len(tag_number), window=window)
 
         # clean this stuff so GC is triggered
         self.model = None
