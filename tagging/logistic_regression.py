@@ -333,8 +333,8 @@ class LogisticRegression(DataAccess):
                                test_score * 100.))
 
                         # save the best model
-                        # with open('best_model.pkl', 'wb') as f:
-                        #    pickle.dump(self, f)
+                        with open('best_model.pkl', 'wb') as f:
+                            pickle.dump(self, f)
 
                 """ Validation Set: this data set is used to minimize overfitting.
                 You're not adjusting the weights of the network with this data set,

@@ -131,7 +131,7 @@ class MLP(DataAccess):
     class).
     """
 
-    def __init__(self, dataset, n_in, n_out, window, n_hidden=960):
+    def __init__(self, dataset, n_in, n_out, window, n_hidden=1200):
         """Initialize the parameters for the multilayer perceptron
 
         :type input: theano.tensor.TensorType
@@ -311,7 +311,7 @@ class MLP(DataAccess):
             givens={
                 x: train_set_x[index * batch_size:(index + 1) * batch_size + self.after + self.before],
                 y: train_set_y[index * batch_size:(index + 1) * batch_size],
-                alpha: 0.005 + .1 / ep
+                alpha: 0.005 + .3 / ep
             }
         )
 
@@ -385,6 +385,10 @@ class MLP(DataAccess):
                                'best model %f %%') %
                               (epoch, minibatch_index + 1, n_train_batches,
                                test_score * 100.))
+
+                        # save the best model
+                        #with open('best_model.pkl', 'wb') as f:
+                        #    pickle.dump(classifier, f)
 
                 if patience <= iter:
                     done_looping = True
